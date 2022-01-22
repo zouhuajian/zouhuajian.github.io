@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zouhuajian.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="阅读本文前建议先阅读此篇博客： Redis源码从哪里读起  Redis 4.0 版本增加了许多不错的新功能，其中自动内存碎片整理功能 activedefrag 肯定是非常诱人的一个，这让 Redis 集群回收内存碎片相比 Redis 3.0 更加优雅，便利。我们升级 Redis 4.0 后直接开启了activedefrag，经过删除部分 key 测试，发现它确实能有效的释放内存碎片，但是并没有测试">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis 4.0 自动内存碎片整理（Active Defrag）源码分析">
+<meta property="og:url" content="https://zouhuajian.github.io/2019/05/28/redis/redis_active_defrag/index.html">
+<meta property="og:site_name" content="Jay&#39;s Blog">
+<meta property="og:description" content="阅读本文前建议先阅读此篇博客： Redis源码从哪里读起  Redis 4.0 版本增加了许多不错的新功能，其中自动内存碎片整理功能 activedefrag 肯定是非常诱人的一个，这让 Redis 集群回收内存碎片相比 Redis 3.0 更加优雅，便利。我们升级 Redis 4.0 后直接开启了activedefrag，经过删除部分 key 测试，发现它确实能有效的释放内存碎片，但是并没有测试">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-05-28T08:50:00.000Z">
+<meta property="article:modified_time" content="2022-01-22T14:44:53.726Z">
+<meta property="article:author" content="Jay.H.Zou">
+<meta property="article:tag" content="redis">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://zouhuajian.github.io/2019/05/28/redis/redis_active_defrag/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Redis 4.0 自动内存碎片整理（Active Defrag）源码分析 | Jay's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Jay's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">O ever youthful, O ever weeping.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/zouhuajian" class="github-corner" title="Welcome to my GitHub" aria-label="Welcome to my GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://zouhuajian.github.io/2019/05/28/redis/redis_active_defrag/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/../images/header.jpg">
+      <meta itemprop="name" content="Jay.H.Zou">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Jay's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Redis 4.0 自动内存碎片整理（Active Defrag）源码分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-05-28 16:50:00" itemprop="dateCreated datePublished" datetime="2019-05-28T16:50:00+08:00">2019-05-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-01-22 22:44:53" itemprop="dateModified" datetime="2022-01-22T22:44:53+08:00">2022-01-22</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis/" itemprop="url" rel="index"><span itemprop="name">Redis</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>阅读本文前建议先阅读此篇博客： <a href = "http://zhangtielei.com/posts/blog-redis-how-to-start.html">Redis源码从哪里读起</a></p>
+<blockquote>
+<p>Redis 4.0 版本增加了许多不错的新功能，其中自动内存碎片整理功能 <code>activedefrag</code> 肯定是非常诱人的一个，这让 Redis 集群回收内存碎片相比 Redis 3.0 更加优雅，便利。我们升级 Redis 4.0 后直接开启了<code>activedefrag</code>，经过删除部分 key 测试，发现它确实能有效的释放内存碎片，但是并没有测试它其他相关参数。  </p>
+</blockquote>
+<h1 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h1><p>由于业务需要，我们删除了集群中<strong>占内存 2/3 的 Key</strong>，删除后集群平均碎片率在 1.3 ~ 1.4，内存明显下降，但是此时服务的响应猛然增高，我们通过 <code>redis-cli -c -h 127.0.0.1 -p 5020 --latency</code> 在服务端测试集群性能，发现响应（网络+排队）达到了 2-3ms，这对于 redis 来说已经非常高了，我们其他集群响应一般都在 0.2ms 左右。经过排查后，我们尝试将 <code>activedefrag</code> 功能关闭，并测试，发现 redis 服务端响应马上恢复正常，线上服务响应也降了下来，打开 <code>activedefrag</code> 响应马上飙高。</p>
+<h1 id="二、Redis-4-0-源码分析（基于分支-4-0）"><a href="#二、Redis-4-0-源码分析（基于分支-4-0）" class="headerlink" title="二、Redis 4.0 源码分析（基于分支 4.0）"></a>二、Redis 4.0 源码分析（基于分支 4.0）</h1><blockquote>
+<p>Active Defrag 功能的核心代码都在 <code>defrag.c</code> 中的<code>activeDefragCycle(void)</code>函数</p>
+</blockquote>
+<span id="more"></span> 
+
+<h2 id="1-Active-Defrag-介绍及相关参数"><a href="#1-Active-Defrag-介绍及相关参数" class="headerlink" title="1. Active Defrag 介绍及相关参数"></a>1. Active Defrag 介绍及相关参数</h2><p>我们先看一下redis.conf 中关于 <code>activedefrag</code> 的注释（google 翻译）</p>
+<p>功能介绍</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">警告此功能是实验性的。然而，即使在生产中也进行了压力测试，并且由多个工程师手动测试了一段时间。</span><br><span class="line">什么是主动碎片整理？</span><br><span class="line">-------------------------------</span><br><span class="line">自动（实时）碎片整理允许Redis服务器压缩内存中小数据分配和数据释放之间的空间，从而允许回收内存。</span><br><span class="line"></span><br><span class="line">碎片化是每个分配器都会发生的一个自然过程（幸运的是，对于Jemalloc来说却不那么重要）和某些工作负载。通常需要重新启动服务器以降低碎片，或者至少刷新所有数据并再次创建。</span><br><span class="line">但是，由于Oran Agra为Redis 4.0实现了这一功能，这个过程可以在运行时以“热”的方式发生，而服务器正在运行。</span><br><span class="line"></span><br><span class="line">基本上当碎片超过一定水平时（参见下面的配置选项），Redis将开始通过利用某些特定的Jemalloc功能在相邻的内存区域中创建值的新副本（以便了解分配是否导致碎片并分配它在一个更好的地方），同时，将释放数据的旧副本。对于所有键，以递增方式重复此过程将导致碎片回退到正常值。</span><br><span class="line">需要了解的重要事项：</span><br><span class="line">1.默认情况下，此功能处于禁用状态，仅在您编译Redis以使用我们随Redis源代码提供的Jemalloc副本时才有效。这是Linux版本的默认设置。</span><br><span class="line">2.如果没有碎片问题，则永远不需要启用此功能。</span><br><span class="line">3.一旦遇到碎片，可以在需要时使用命令“CONFIG SET activedefrag yes”启用此功能。配置参数能够微调其行为碎片整理过程。如果您不确定它们的含义，最好保持默认设置不变。</span><br></pre></td></tr></table></figure>
+
+<p>参数介绍</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># 开启自动内存碎片整理(总开关)</span><br><span class="line">activedefrag yes</span><br><span class="line"># 当碎片达到 100mb 时，开启内存碎片整理</span><br><span class="line">active-defrag-ignore-bytes 100mb</span><br><span class="line"># 当碎片超过 10% 时，开启内存碎片整理</span><br><span class="line">active-defrag-threshold-lower 10</span><br><span class="line"># 内存碎片超过 100%，则尽最大努力整理</span><br><span class="line">active-defrag-threshold-upper 100</span><br><span class="line"># 内存自动整理占用资源最小百分比</span><br><span class="line">active-defrag-cycle-min 25</span><br><span class="line"># 内存自动整理占用资源最大百分比</span><br><span class="line">active-defrag-cycle-max 75</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-Active-Defrag-Timer-在那个线程中执行的？"><a href="#2-Active-Defrag-Timer-在那个线程中执行的？" class="headerlink" title="2. Active Defrag Timer 在那个线程中执行的？"></a>2. Active Defrag Timer 在那个线程中执行的？</h2><p>Redis 是基于事件驱动的，<strong>Timer事件和I/O事件会注册到主线程当中</strong>，其中内存碎片整理Timer也是在<strong>主线程</strong>当中执行的。</p>
+<p><a href = "http://zhangtielei.com/posts/blog-redis-how-to-start.html">原文引用[1]</a>  </p>
+<blockquote>
+<ul>
+<li><strong>注册timer事件回调</strong>。Redis作为一个单线程(single-threaded)的程序，它如果想调度一些异步执行的任务，比如周期性地执行过期key的回收动作，除了依赖事件循环机制，没有其它的办法。这一步就是向前面刚刚创建好的事件循环中注册一个timer事件，并配置成可以周期性地执行一个回调函数：<code>serverCron</code>。由于Redis只有一个主线程，因此这个函数周期性的执行也是在这个线程内，它由事件循环来驱动（即在合适的时机调用），但不影响同一个线程上其它逻辑的执行（相当于按时间分片了）。<code>serverCron</code>函数到底做了什么呢？实际上，它除了周期性地执行过期key的回收动作，还执行了很多其它任务，比如主从重连、Cluster节点间的重连、BGSAVE和AOF rewrite的触发执行，等等。这个不是本文的重点，这里就不展开描述了。  </li>
+<li><strong>注册I/O事件回调</strong>。Redis服务端最主要的工作就是监听I/O事件，从中分析出来自客户端的命令请求，执行命令，然后返回响应结果。对于I/O事件的监听，自然也是依赖事件循环。前面提到过，Redis可以打开两种监听：对于TCP连接的监听和对于Unix domain socket的监听。因此，这里就包含对于这两种I/O事件的回调的注册，两个回调函数分别是<code>acceptTcpHandler</code>和<code>acceptUnixHandler</code>。对于来自Redis客户端的请求的处理，就会走到这两个函数中去。我们在下一部分就会讨论到这个处理过程。另外，其实Redis在这里还会注册一个I/O事件，用于通过管道(pipe)机制与module进行双向通信。这个也不是本文的重点，我们暂时忽略它。  </li>
+<li><strong>初始化后台线程</strong>。Redis会创建一些额外的线程，在后台运行，专门用于处理一些耗时的并且可以被延迟执行的任务（一般是一些清理工作）。在Redis里面这些后台线程被称为bio(Background I/O service)。它们负责的任务包括：可以延迟执行的文件关闭操作(比如unlink命令的执行)，AOF的持久化写库操作(即fsync调用，但注意只有可以被延迟执行的fsync操作才在后台线程执行)，还有一些大key的清除操作(比如flushdb async命令的执行)。可见bio这个名字有点名不副实，它做的事情不一定跟I/O有关。对于这些后台线程，我们可能还会产生一个疑问：前面的初始化过程，已经注册了一个timer事件回调，即<code>serverCron</code>函数，按说后台线程执行的这些任务似乎也可以放在<code>serverCron</code>中去执行。因为<code>serverCron</code>函数也是可以用来执行后台任务的。实际上这样做是不行的。前面我们已经提到过，<code>serverCron</code>由事件循环来驱动，执行还是在Redis主线程上，相当于和主线程上执行的其它操作（主要是对于命令请求的执行）按时间进行分片了。这样的话，<code>serverCron</code>里面就不能执行过于耗时的操作，否则它就会影响Redis执行命令的响应时间。因此，对于耗时的、并且可以被延迟执行的任务，就只能放到单独的线程中去执行了。</li>
+</ul>
+</blockquote>
+<h2 id="3-Active-Defrag-Timer-的逻辑什么时候会执行？"><a href="#3-Active-Defrag-Timer-的逻辑什么时候会执行？" class="headerlink" title="3.Active Defrag Timer 的逻辑什么时候会执行？"></a>3.Active Defrag Timer 的逻辑什么时候会执行？</h2><p>在参数介绍中我们能看出，<code>activedefrag</code> 是一个总开关，当开启时才<strong>有可能</strong>执行，而是否真正执行则需要下面几个参数控制。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">activeDefragCycle</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="comment">/* ... */</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 每隔一秒，检查碎片情况，决定是否执行*/</span></span><br><span class="line">    run_with_period(<span class="number">1000</span>) &#123;</span><br><span class="line">        <span class="keyword">size_t</span> frag_bytes;</span><br><span class="line">        <span class="comment">/* 计算碎片率和碎片大小*/</span></span><br><span class="line">        <span class="keyword">float</span> frag_pct = getAllocatorFragmentation(&amp;frag_bytes);</span><br><span class="line">        <span class="comment">/* 如果没有运行或碎片低于阈值，则不执行 */</span></span><br><span class="line">        <span class="keyword">if</span> (!server.active_defrag_running) &#123;</span><br><span class="line">            <span class="comment">/* 根据计算的碎片率和大小与我们设置的参数进行比较判断，决定是否执行 */</span></span><br><span class="line">            <span class="keyword">if</span>(frag_pct &lt; server.active_defrag_threshold_lower || frag_bytes &lt; server.active_defrag_ignore_bytes)</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="comment">/* ... */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过源码，我们可以看出碎片整理是否执行主要是通过<code>active_defrag_running</code>, <code>active-defrag-ignore-bytes</code>, <code>active-defrag-threshold-lower</code> 这几个参数共同决定的。<br>官方默认设置内存碎片率大于10%且内存碎片大小超过100mb。</p>
+<h2 id="4-Active-Defrag-为什么会影响Redis集群的响应？"><a href="#4-Active-Defrag-为什么会影响Redis集群的响应？" class="headerlink" title="4.Active Defrag 为什么会影响Redis集群的响应？"></a>4.Active Defrag 为什么会影响Redis集群的响应？</h2><p>我们将 Redis 集群2/3的数据都删除了，碎片率很快降到 1.3 左右，内存也被很快释放，但是为什么 Redis 响应会变高呢？  </p>
+<p>首先，我们内存碎片整理是在主线程中执行的，通过源码发现，内存碎片整理操作会 scan （通过迭代进行）整个 redis 节点，并进行内存<strong>复制、转移</strong>等操作，因为 redis 是单线程的，所以这肯定会导致 redis 性能下降（通过调整相关配置可以控制内存整理对 redis 集群的影响，后面会详细说明）。  </p>
+<p>通过 redis 日志发现，<strong>碎片整理还在不停地执行</strong>，并使用了<strong>75%的CPU</strong>（我们将其解释为 redis 主线程资源的 75%），每次执行耗时82s（<strong>此处注意，虽然耗时82s，但是并不是 redis 主线程阻塞的这么久的时间，而是从第一次迭代到最后一次迭代之间的时间，在此时间之内主线程可能还会处理命令请求</strong>）。<br>从日志中可见<code>frag=14%</code>，我们配置的参数一直能达到内存碎片整理的阈值，主线程会不停的去进行内存碎片整理，导致redis集群性能变差。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* redis 配置及日志</span></span><br><span class="line"><span class="comment"> * activedefrag yes</span></span><br><span class="line"><span class="comment"> * active-defrag-ignore-bytes 100mb</span></span><br><span class="line"><span class="comment"> * active-defrag-threshold-lower 10</span></span><br><span class="line"><span class="comment"> * active-defrag-threshold-upper 100</span></span><br><span class="line"><span class="comment"> * active-defrag-cycle-min 25</span></span><br><span class="line"><span class="comment"> * active-defrag-cycle-max 75 */</span></span><br><span class="line"><span class="number">11</span>:M <span class="number">28</span> May <span class="number">06</span>:<span class="number">37</span>:<span class="number">17.430</span> - Starting active defrag, frag=<span class="number">14</span>%, frag_bytes=<span class="number">484401800</span>, cpu=<span class="number">75</span>%</span><br><span class="line"><span class="number">11</span>:M <span class="number">28</span> May <span class="number">06</span>:<span class="number">38</span>:<span class="number">40.424</span> - Active defrag done in <span class="number">82993</span>ms, reallocated=<span class="number">50</span>, frag=<span class="number">14</span>%, frag_bytes=<span class="number">484365248</span></span><br><span class="line"></span><br><span class="line"><span class="meta"># redis 性能</span></span><br><span class="line">[service@bigdata src]$ ./redis-cli -h <span class="number">127.0</span><span class="number">.0</span><span class="number">.1</span> -p <span class="number">5020</span> --latency</span><br><span class="line">min: <span class="number">0</span>, max: <span class="number">74</span>, avg: <span class="number">7.38</span> (<span class="number">110</span> samples)</span><br></pre></td></tr></table></figure>
+
+<p>我们先将 <code>activedefrag</code> 置为 <code>no</code>，此时响应马上恢复正常。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> redis 性能</span></span><br><span class="line">min: 0, max: 1, avg: 0.14 (197 samples)</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-Active-Defrag-相关参数该怎么调整？"><a href="#5-Active-Defrag-相关参数该怎么调整？" class="headerlink" title="5.Active Defrag 相关参数该怎么调整？"></a>5.Active Defrag 相关参数该怎么调整？</h2><p>内存碎片整理的功能我们还是需要的，那么我们该如何调整参数才能在redis性能和内存碎片整理之间找到一个平衡点呢？于是我对这几个参数进行调整测试。  </p>
+<p><strong>(1) 调整<code>active-defrag-ignore-bytes</code>和<code>active-defrag-threshold-lower</code></strong><br>此调整是相对简单的，仅用来判断是否进入内存碎片整理逻辑，如果将碎片率或碎片大小调大至一个能接受的阈值，redis 不进行内存碎片整理，则不会对集群有过多的影响。从下面的代码我们可以发现，当两个条件都满足时，则会进入内存碎片整理逻辑。  </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!server.active_defrag_running) &#123;</span><br><span class="line">    <span class="keyword">if</span>(frag_pct &lt; server.active_defrag_threshold_lower || frag_bytes &lt; server.active_defrag_ignore_bytes)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>此处需要注意，<code>frag_pct</code>和<code>frag_bytes</code> 并不等于 <code>info</code> 命令中的 <code>mem_fragmentation_ratio</code>，比如此次问题出现时，<code>mem_fragmentation_ratio = 1.31</code>, 而通过<code>frag_pct</code>计算的碎片率是 1.14，所以设置参数时不能完全参考<code>info</code>中的<code>mem_fragmentation_ratio</code>信息。  </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* frag_pct 是从 jemalloc 获取的 */</span></span><br><span class="line"><span class="comment">/* Utility function to get the fragmentation ratio from jemalloc.</span></span><br><span class="line"><span class="comment"> * It is critical to do that by comparing only heap maps that belown to</span></span><br><span class="line"><span class="comment"> * jemalloc, and skip ones the jemalloc keeps as spare. Since we use this</span></span><br><span class="line"><span class="comment"> * fragmentation ratio in order to decide if a defrag action should be taken</span></span><br><span class="line"><span class="comment"> * or not, a false detection can cause the defragmenter to waste a lot of CPU</span></span><br><span class="line"><span class="comment"> * without the possibility of getting any results. */</span></span><br><span class="line"><span class="function"><span class="keyword">float</span> <span class="title">getAllocatorFragmentation</span><span class="params">(<span class="keyword">size_t</span> *out_frag_bytes)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">size_t</span> epoch = <span class="number">1</span>, allocated = <span class="number">0</span>, resident = <span class="number">0</span>, active = <span class="number">0</span>, sz = <span class="keyword">sizeof</span>(<span class="keyword">size_t</span>);</span><br><span class="line">    <span class="comment">/* Update the statistics cached by mallctl. */</span></span><br><span class="line">    je_mallctl(<span class="string">&quot;epoch&quot;</span>, &amp;epoch, &amp;sz, &amp;epoch, sz);</span><br><span class="line">    <span class="comment">/* Unlike RSS, this does not include RSS from shared libraries and other non</span></span><br><span class="line"><span class="comment">     * heap mappings. */</span></span><br><span class="line">    je_mallctl(<span class="string">&quot;stats.resident&quot;</span>, &amp;resident, &amp;sz, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="comment">/* Unlike resident, this doesn&#x27;t not include the pages jemalloc reserves</span></span><br><span class="line"><span class="comment">     * for re-use (purge will clean that). */</span></span><br><span class="line">    je_mallctl(<span class="string">&quot;stats.active&quot;</span>, &amp;active, &amp;sz, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="comment">/* Unlike zmalloc_used_memory, this matches the stats.resident by taking</span></span><br><span class="line"><span class="comment">     * into account all allocations done by this process (not only zmalloc). */</span></span><br><span class="line">    je_mallctl(<span class="string">&quot;stats.allocated&quot;</span>, &amp;allocated, &amp;sz, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">float</span> frag_pct = ((<span class="keyword">float</span>)active / allocated)*<span class="number">100</span> - <span class="number">100</span>;</span><br><span class="line">    <span class="keyword">size_t</span> frag_bytes = active - allocated;</span><br><span class="line">    <span class="keyword">float</span> rss_pct = ((<span class="keyword">float</span>)resident / allocated)*<span class="number">100</span> - <span class="number">100</span>;</span><br><span class="line">    <span class="keyword">size_t</span> rss_bytes = resident - allocated;</span><br><span class="line">    <span class="keyword">if</span>(out_frag_bytes)</span><br><span class="line">        *out_frag_bytes = frag_bytes;</span><br><span class="line">    serverLog(LL_DEBUG,</span><br><span class="line">        <span class="string">&quot;allocated=%zu, active=%zu, resident=%zu, frag=%.0f%% (%.0f%% rss), frag_bytes=%zu (%zu%% rss)&quot;</span>,</span><br><span class="line">        allocated, active, resident, frag_pct, rss_pct, frag_bytes, rss_bytes);</span><br><span class="line">    <span class="keyword">return</span> frag_pct;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* mem_fragmentation_ratio */</span></span><br><span class="line"><span class="comment">/* Fragmentation = RSS / allocated-bytes */</span></span><br><span class="line"><span class="function"><span class="keyword">float</span> <span class="title">zmalloc_get_fragmentation_ratio</span><span class="params">(<span class="keyword">size_t</span> rss)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (<span class="keyword">float</span>)rss/zmalloc_used_memory();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>(2)调整<code>active-defrag-cycle-min</code>和<code>active-defrag-cycle-max</code></strong><br>这两个参数是占用主线程资源比率的上下限，如果想保证内存碎片整理功能不过度影响 redis 集群性能，则需要仔细斟酌着两个参数的配置。<br>当我调整这两个参数时，我通过观察内存整理时的耗时、资源占用、redis响应等情况发现——当资源占用越多时，内存碎片整理力度越大，时间越短，当然对redis性能的影响也更大。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> active-defrag-cycle-min 10</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> active-defrag-cycle-max 10</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 日志记录-耗时、资源占用</span></span><br><span class="line">11:M 28 May 08:37:39.458 - Starting active defrag, frag=15%, frag_bytes=502210608, cpu=10%</span><br><span class="line">11:M 28 May 08:45:26.160 - Active defrag done in 466700ms, reallocated=187804, frag=14%, frag_bytes=493183888</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> redis 响应</span></span><br><span class="line">min: 0, max: 27, avg: 2.69 (295 samples)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> active-defrag-cycle-min 5</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> active-defrag-cycle-max 10</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 日志记录-耗时、资源占用</span></span><br><span class="line">11:M 28 May 07:08:29.988 - Starting active defrag, frag=14%, frag_bytes=487298400, cpu=5%</span><br><span class="line">11:M 28 May 07:22:58.225 - Active defrag done in 868237ms, reallocated=4555, frag=14%, frag_bytes=484875424</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> redis 响应</span></span><br><span class="line">min: 0, max: 6, avg: 0.44 (251 samples)</span><br></pre></td></tr></table></figure>
+
+<p><strong>(3) 综合调整</strong><br>在此之前，我们还需要再看一下<code>activeDefragCycle(void)</code>这个函数的具体逻辑<br><a target="_blank" rel="noopener" href="https://github.com/antirez/redis/blob/4.0/src/defrag.c">defrag.c</a><br><strong>Tips:</strong> C 语言中被 static 修饰的变量是全局的，如下代码中的<code>cursor</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 从serverCron执行增量碎片整理工作。</span></span><br><span class="line"><span class="comment"> * 这与activeExpireCycle的工作方式类似，我们在调用之间进行增量工作。 */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">activeDefragCycle</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> current_db = <span class="number">-1</span>;</span><br><span class="line">    <span class="comment">/* 游标，通过迭代scan 整个 redis 节点*/</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">unsigned</span> <span class="keyword">long</span> cursor = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">static</span> redisDb *db = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">long</span> <span class="keyword">long</span> start_scan, start_stat;</span><br><span class="line">    <span class="comment">/* 迭代计数器 */</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> iterations = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> <span class="keyword">long</span> defragged = server.stat_active_defrag_hits;</span><br><span class="line">    <span class="keyword">long</span> <span class="keyword">long</span> start, timelimit;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (server.aof_child_pid!=<span class="number">-1</span> || server.rdb_child_pid!=<span class="number">-1</span>)</span><br><span class="line">        <span class="keyword">return</span>; <span class="comment">/* Defragging memory while there&#x27;s a fork will just do damage. */</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Once a second, check if we the fragmentation justfies starting a scan</span></span><br><span class="line"><span class="comment">     * or making it more aggressive. */</span></span><br><span class="line">    run_with_period(<span class="number">1000</span>) &#123;</span><br><span class="line">        <span class="keyword">size_t</span> frag_bytes;</span><br><span class="line">        <span class="keyword">float</span> frag_pct = getAllocatorFragmentation(&amp;frag_bytes);</span><br><span class="line">        <span class="comment">/* If we&#x27;re not already running, and below the threshold, exit. */</span></span><br><span class="line">        <span class="keyword">if</span> (!server.active_defrag_running) &#123;</span><br><span class="line">            <span class="keyword">if</span>(frag_pct &lt; server.active_defrag_threshold_lower || frag_bytes &lt; server.active_defrag_ignore_bytes)</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* 计算内存碎片整理所需要占用的主线程资源 */</span></span><br><span class="line">        <span class="keyword">int</span> cpu_pct = INTERPOLATE(frag_pct,</span><br><span class="line">                server.active_defrag_threshold_lower,</span><br><span class="line">                server.active_defrag_threshold_upper,</span><br><span class="line">                server.active_defrag_cycle_min,</span><br><span class="line">                server.active_defrag_cycle_max);</span><br><span class="line">        <span class="comment">/* 限制占用资源范围 */</span></span><br><span class="line">        cpu_pct = LIMIT(cpu_pct,</span><br><span class="line">                server.active_defrag_cycle_min,</span><br><span class="line">                server.active_defrag_cycle_max);</span><br><span class="line">         <span class="comment">/* We allow increasing the aggressiveness during a scan, but don&#x27;t</span></span><br><span class="line"><span class="comment">          * reduce it. */</span></span><br><span class="line">        <span class="keyword">if</span> (!server.active_defrag_running ||</span><br><span class="line">            cpu_pct &gt; server.active_defrag_running)</span><br><span class="line">        &#123;</span><br><span class="line">            server.active_defrag_running = cpu_pct;</span><br><span class="line">            serverLog(LL_VERBOSE,</span><br><span class="line">                <span class="string">&quot;Starting active defrag, frag=%.0f%%, frag_bytes=%zu, cpu=%d%%&quot;</span>,</span><br><span class="line">                frag_pct, frag_bytes, cpu_pct);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!server.active_defrag_running)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* See activeExpireCycle for how timelimit is handled. */</span></span><br><span class="line">    start = ustime();</span><br><span class="line">    <span class="comment">/* 计算每次迭代的时间限制 */</span></span><br><span class="line">    timelimit = <span class="number">1000000</span>*server.active_defrag_running/server.hz/<span class="number">100</span>;</span><br><span class="line">    <span class="keyword">if</span> (timelimit &lt;= <span class="number">0</span>) timelimit = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (!cursor) &#123;</span><br><span class="line">            <span class="comment">/* Move on to next database, and stop if we reached the last one. */</span></span><br><span class="line">            <span class="keyword">if</span> (++current_db &gt;= server.dbnum) &#123;</span><br><span class="line">                <span class="keyword">long</span> <span class="keyword">long</span> now = ustime();</span><br><span class="line">                <span class="keyword">size_t</span> frag_bytes;</span><br><span class="line">                <span class="keyword">float</span> frag_pct = getAllocatorFragmentation(&amp;frag_bytes);</span><br><span class="line">                serverLog(LL_VERBOSE,</span><br><span class="line">                    <span class="string">&quot;Active defrag done in %dms, reallocated=%d, frag=%.0f%%, frag_bytes=%zu&quot;</span>,</span><br><span class="line">                    (<span class="keyword">int</span>)((now - start_scan)/<span class="number">1000</span>), (<span class="keyword">int</span>)(server.stat_active_defrag_hits - start_stat), frag_pct, frag_bytes);</span><br><span class="line"></span><br><span class="line">                start_scan = now;</span><br><span class="line">                current_db = <span class="number">-1</span>;</span><br><span class="line">                cursor = <span class="number">0</span>;</span><br><span class="line">                db = <span class="literal">NULL</span>;</span><br><span class="line">                server.active_defrag_running = <span class="number">0</span>;</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> <span class="keyword">if</span> (current_db==<span class="number">0</span>) &#123;</span><br><span class="line">                <span class="comment">/* Start a scan from the first database. */</span></span><br><span class="line">                start_scan = ustime();</span><br><span class="line">                start_stat = server.stat_active_defrag_hits;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            db = &amp;server.db[current_db];</span><br><span class="line">            cursor = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">do</span> &#123;</span><br><span class="line">            cursor = dictScan(db-&gt;dict, cursor, defragScanCallback, defragDictBucketCallback, db);</span><br><span class="line">            <span class="comment">/* Once in 16 scan iterations, or 1000 pointer reallocations</span></span><br><span class="line"><span class="comment">             * (if we have a lot of pointers in one hash bucket), check if we</span></span><br><span class="line"><span class="comment">             * reached the tiem limit. */</span></span><br><span class="line">            <span class="comment">/* 一旦进入16次扫描迭代，或1000次指针重新分配（如果我们在一个散列桶中有很多指针），检查我们是否达到了tiem限制。*/</span></span><br><span class="line">            <span class="keyword">if</span> (cursor &amp;&amp; (++iterations &gt; <span class="number">16</span> || server.stat_active_defrag_hits - defragged &gt; <span class="number">1000</span>)) &#123;</span><br><span class="line">                <span class="comment">/* 如果超时则退出，等待下次获取线程资源后继续执行，*/</span></span><br><span class="line">                <span class="keyword">if</span> ((ustime() - start) &gt; timelimit) &#123;</span><br><span class="line">                    <span class="keyword">return</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                iterations = <span class="number">0</span>;</span><br><span class="line">                defragged = server.stat_active_defrag_hits;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">while</span>(cursor);</span><br><span class="line">    &#125; <span class="keyword">while</span>(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过代码逻辑分析，我们注意到有两个计算<code>cpu_pct</code>(资源占用率)的函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> cpu_pct = INTERPOLATE(frag_pct,</span><br><span class="line">        server.active_defrag_threshold_lower,</span><br><span class="line">        server.active_defrag_threshold_upper,</span><br><span class="line">        server.active_defrag_cycle_min,</span><br><span class="line">        server.active_defrag_cycle_max);</span><br><span class="line">cpu_pct = LIMIT(cpu_pct,</span><br><span class="line">        server.active_defrag_cycle_min,</span><br><span class="line">        server.active_defrag_cycle_max);</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 插值运算函数 */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> INTERPOLATE(x, x1, x2, y1, y2) ( (y1) + ((x)-(x1)) * ((y2)-(y1)) / ((x2)-(x1)) )</span></span><br><span class="line"><span class="comment">/* 极值函数 */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LIMIT(y, min, max) ((y)<span class="meta-string">&lt;(min)? min: ((y)&gt;</span>(max)? max: (y)))</span></span><br></pre></td></tr></table></figure>
+<p>假设我们设置参数如下（产线配置）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">active-defrag-ignore-bytes 500mb</span><br><span class="line">active-defrag-threshold-lower 50</span><br><span class="line">active-defrag-threshold-upper 100</span><br><span class="line">active-defrag-cycle-min 5</span><br><span class="line">active-defrag-cycle-max 10</span><br></pre></td></tr></table></figure>
+<p>(1) 我们可以得出第一个计算 <code>cpu_pct</code>的第一个函数 <code>y = 0.1x</code><br>(2) 假设此时的 <code>frag_pct = 100 &amp; frag_bytes &gt; 500mb</code>,  则<code>cpu_pct = 10</code><br>(3) 在经过求极值函数计算后，得到最后的 <code>cpu_pct</code>的值 10<br>(4) 然后通过这个值进而计算出<code>timelimit = 1000000*server.active_defrag_running(10)/server.hz(in redis.conf 10)/100 = 10000μs = 10ms</code><br>(5) 最后 Redis 自动内存碎片整理功能通过<code>timelimit</code>的值来尽可能的保证不集中性地占用主线程资源  </p>
+<h2 id="6-Memory-Purge-手动整理内存碎片"><a href="#6-Memory-Purge-手动整理内存碎片" class="headerlink" title="6.Memory Purge 手动整理内存碎片"></a>6.Memory Purge 手动整理内存碎片</h2><p>此处顺便介绍一下 Memory Purge 功能。<br><code>memory purge</code>是手动触发整理内存碎片的 Command，它会以一个I/O事件的形式注册到主线程当中去执行。值得注意的是，它和 <code>activedefrag</code>回收的并不是同一块区域的内存，<strong>它尝试清除脏页以便内存分配器回收使用</strong>。<br>具体逻辑，我们来看一下源码中的实现，<a target="_blank" rel="noopener" href="https://github.com/antirez/redis/blob/4.0/src/object.c">object.c</a>  </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*必须是使用jemalloc内存分配器时才可用*/</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> defined(USE_JEMALLOC)</span></span><br><span class="line">    <span class="keyword">char</span> tmp[<span class="number">32</span>];</span><br><span class="line">    <span class="keyword">unsigned</span> narenas = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">size_t</span> sz = <span class="keyword">sizeof</span>(<span class="keyword">unsigned</span>);</span><br><span class="line">    <span class="comment">/*获取arenas的个数，然后调用jemalloc的接口进行清理 */</span></span><br><span class="line">    <span class="keyword">if</span> (!je_mallctl(<span class="string">&quot;arenas.narenas&quot;</span>, &amp;narenas, &amp;sz, <span class="literal">NULL</span>, <span class="number">0</span>)) &#123;</span><br><span class="line">        <span class="built_in">sprintf</span>(tmp, <span class="string">&quot;arena.%d.purge&quot;</span>, narenas);</span><br><span class="line">        <span class="keyword">if</span> (!je_mallctl(tmp, <span class="literal">NULL</span>, <span class="number">0</span>, <span class="literal">NULL</span>, <span class="number">0</span>)) &#123;</span><br><span class="line">            addReply(c, shared.ok);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    addReplyError(c, <span class="string">&quot;Error purging dirty pages&quot;</span>);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">    addReply(c, shared.ok);</span><br><span class="line">    <span class="comment">/* Nothing to do for other allocators. */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>关于arenas相关的知识，可以参考这篇文章的解释。<a href = "https://blog.csdn.net/txx_683/article/details/53469175">原文引用[2]</a>  </p>
+<p>从产线实际使用的情况中来看，<code>memory purge</code> 的效果相比于<code>activedefrag</code>并没有那么的理想，这也是其机制决定的，但是某些内存碎片率比较极端的情况下，也会起到一定的作用。建议根据实际情况,和activedefrag配合使用。</p>
+<h1 id="三、Active-Defrag-参数调整建议"><a href="#三、Active-Defrag-参数调整建议" class="headerlink" title="三、Active Defrag 参数调整建议"></a>三、Active Defrag 参数调整建议</h1><p>综上，我们总结出，我们通过<code>active-defrag-ignore-bytes</code>和<code>active-defrag-threshold-lower</code>来控制是否进行内存碎片整理，通过<code>active-defrag-cycle-min</code>和<code>active-defrag-cycle-max</code>来控制整理内存碎片的力度。<br>由于各个公司的Redis集群大小,存储的数据结构都会存在差异，所以在开启自动的内存碎片整理的开关后，一定要依据自身的实际情况来设置整理内存碎片的力度的参数。</p>
+<p>参考文章：<br>[1] <a href = "http://zhangtielei.com/posts/blog-redis-how-to-start.html">Redis源码从哪里读起</a><br>[2] <a href = "https://my.oschina.net/watliu/blog/1620705">redis4支持内存碎片清理功能实现分析</a><br>[3] <a href = "https://blog.csdn.net/txx_683/article/details/53469175">jemalloc 3.6.0源码详解—[1]Arena</a></p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>Welcome to my other publishing channels</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="https://github.com/zouhuajian">
+            <span class="icon">
+              <i class="fab fa-github"></i>
+            </span>
+
+            <span class="label">GitHub</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/redis/" rel="tag"># redis</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2022/01/22/home/" rel="next" title="Personal Profile">
+      Personal Profile <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E7%8E%B0%E8%B1%A1"><span class="nav-number">1.</span> <span class="nav-text">一、问题现象</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81Redis-4-0-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%EF%BC%88%E5%9F%BA%E4%BA%8E%E5%88%86%E6%94%AF-4-0%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">二、Redis 4.0 源码分析（基于分支 4.0）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Active-Defrag-%E4%BB%8B%E7%BB%8D%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%8F%82%E6%95%B0"><span class="nav-number">2.1.</span> <span class="nav-text">1. Active Defrag 介绍及相关参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Active-Defrag-Timer-%E5%9C%A8%E9%82%A3%E4%B8%AA%E7%BA%BF%E7%A8%8B%E4%B8%AD%E6%89%A7%E8%A1%8C%E7%9A%84%EF%BC%9F"><span class="nav-number">2.2.</span> <span class="nav-text">2. Active Defrag Timer 在那个线程中执行的？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Active-Defrag-Timer-%E7%9A%84%E9%80%BB%E8%BE%91%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BC%9A%E6%89%A7%E8%A1%8C%EF%BC%9F"><span class="nav-number">2.3.</span> <span class="nav-text">3.Active Defrag Timer 的逻辑什么时候会执行？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-Active-Defrag-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%BD%B1%E5%93%8DRedis%E9%9B%86%E7%BE%A4%E7%9A%84%E5%93%8D%E5%BA%94%EF%BC%9F"><span class="nav-number">2.4.</span> <span class="nav-text">4.Active Defrag 为什么会影响Redis集群的响应？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-Active-Defrag-%E7%9B%B8%E5%85%B3%E5%8F%82%E6%95%B0%E8%AF%A5%E6%80%8E%E4%B9%88%E8%B0%83%E6%95%B4%EF%BC%9F"><span class="nav-number">2.5.</span> <span class="nav-text">5.Active Defrag 相关参数该怎么调整？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-Memory-Purge-%E6%89%8B%E5%8A%A8%E6%95%B4%E7%90%86%E5%86%85%E5%AD%98%E7%A2%8E%E7%89%87"><span class="nav-number">2.6.</span> <span class="nav-text">6.Memory Purge 手动整理内存碎片</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%E3%80%81Active-Defrag-%E5%8F%82%E6%95%B0%E8%B0%83%E6%95%B4%E5%BB%BA%E8%AE%AE"><span class="nav-number">3.</span> <span class="nav-text">三、Active Defrag 参数调整建议</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Jay.H.Zou"
+      src="/../images/header.jpg">
+  <p class="site-author-name" itemprop="name">Jay.H.Zou</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zouhuajian" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zouhuajian" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:zouhuajianclever@gmail.com" title="E-Mail → mailto:zouhuajianclever@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/x-coastline" title="https:&#x2F;&#x2F;github.com&#x2F;x-coastline" rel="noopener" target="_blank">Coastline</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jay.H.Zou</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
