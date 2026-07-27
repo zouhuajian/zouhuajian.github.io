@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.0.2">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/favicon/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zouhuajian.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="本文讨论 Router-Based Federation 架构下，客户端经 Router 访问 Observer NameNode 时的读一致性实现，重点分析 State ID 传播、ONN 对齐和一致性边界。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop 3.4.1 RBF Observer 读一致性：State ID 传播、ONN 对齐与一致性边界">
+<meta property="og:url" content="https://zouhuajian.github.io/2026/07/27/hadoop/hadoop-3.4.1-rbf-observer-read-consistency/index.html">
+<meta property="og:site_name" content="Jay&#39;s Blog">
+<meta property="og:description" content="本文讨论 Router-Based Federation 架构下，客户端经 Router 访问 Observer NameNode 时的读一致性实现，重点分析 State ID 传播、ONN 对齐和一致性边界。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-07-27T09:08:50.000Z">
+<meta property="article:modified_time" content="2026-07-27T09:08:50.000Z">
+<meta property="article:author" content="Jay.H.Zou">
+<meta property="article:tag" content="hadoop">
+<meta property="article:tag" content="rbf">
+<meta property="article:tag" content="observer-read">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://zouhuajian.github.io/2026/07/27/hadoop/hadoop-3.4.1-rbf-observer-read-consistency/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Hadoop 3.4.1 RBF Observer 读一致性：State ID 传播、ONN 对齐与一致性边界 | Jay's Blog</title>
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Jay's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">O ever youthful, O ever weeping.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/zouhuajian" class="github-corner" title="Welcome to my GitHub" aria-label="Welcome to my GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+
+
+          <div class="content post posts-expand">
+
+
+
+
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zouhuajian.github.io/2026/07/27/hadoop/hadoop-3.4.1-rbf-observer-read-consistency/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/../images/header.jpg">
+      <meta itemprop="name" content="Jay.H.Zou">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Jay's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Hadoop 3.4.1 RBF Observer 读一致性：State ID 传播、ONN 对齐与一致性边界
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+
+              <time title="Created: 2026-07-27 17:08:50" itemprop="dateCreated datePublished" datetime="2026-07-27T17:08:50+08:00">2026-07-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a>
+                </span>
+            </span>
+
+
+
+
+        </div>
+      </header>
+
+
+
+
+    <div class="post-body" itemprop="articleBody">
+
+<blockquote>
+<p>本文讨论的是 <strong>Router-Based Federation（RBF）架构下，客户端经 Router 访问 Observer NameNode（ONN）</strong> 的读一致性实现。早期单个 HA nameservice 中由客户端直接使用 <code>ObserverReadProxyProvider</code> 访问 ONN 的机制，只作为基础背景，不是本文主体。</p>
+<p>本文代码基于 Apache Hadoop 3.4.1 官方版本，文中的代码片段为便于阅读而简化的等价伪代码。</p>
+</blockquote>
+<h2 id="1-RBF-Observer-Read-的一致性问题"><a href="#1-RBF-Observer-Read-%E7%9A%84%E4%B8%80%E8%87%B4%E6%80%A7%E9%97%AE%E9%A2%98" class="headerlink" title="1. RBF Observer Read 的一致性问题"></a>1. RBF Observer Read 的一致性问题</h2>
+<p>Observer NameNode 通过持续 tail edits，把 Active NameNode（ANN）已经提交的 namespace 变更应用到自己的内存状态。它不处理写请求，也不会产生尚未提交的 namespace 状态，所以这里主要面对的是 <strong>陈旧读（stale read）</strong>，而不是数据库语境中的脏读。</p>
+<p>真正的问题是：</p>
+<blockquote>
+<p>当一个客户端刚刚完成写操作，或已经从 ANN 观察到某个 namespace 状态后，后续读被 Router 转发给 ONN 时，如何证明 ONN 至少已经应用到客户端所观察过的状态？</p>
+</blockquote>
+<p>在单个 HA nameservice 中，可以用一个全局 state ID 表达这个下限。进入 RBF 后，问题明显复杂了：</p>
+<ul>
+<li>一个 Router 后面可能连接多个 nameservice；</li>
+<li>不同 nameservice 的 edit log 和 state ID 彼此独立；</li>
+<li>客户端可能在多个 Router 之间切换；</li>
+<li>Router 还会为不同用户和下游 NameNode 维护不同的连接池；</li>
+<li>不能把任意客户端上报的 state ID 直接当成 Router 的全局可信状态。</li>
+</ul>
+<p>因此，Hadoop 3.4.1 没有试图把所有 Router 同步成一个全局一致的状态机，而是采用了一条更轻量的路径：</p>
+<blockquote>
+<p>Router 将各 namespace 的已知 state ID 返回给客户端；客户端在后续请求中带回这些状态；Router 再把目标 namespace 的客户端状态作为 ONN 读下限。</p>
+</blockquote>
+<p>这套机制的目标是 <strong>客户端因果一致性</strong>，而不是全局线性一致性。</p>
+<h2 id="2-一致性模型"><a href="#2-%E4%B8%80%E8%87%B4%E6%80%A7%E6%A8%A1%E5%9E%8B" class="headerlink" title="2. 一致性模型"></a>2. 一致性模型</h2>
+<p>为便于后续分析，定义四类状态：</p>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>对应实现</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>C(ns)</code></td>
+<td><code>ClientGSIContext.routerFederatedState</code></td>
+<td>客户端已经观察到的 namespace 状态</td>
+</tr>
+<tr>
+<td><code>R(ns)</code></td>
+<td><code>RouterStateIdContext.namespaceIdMap</code></td>
+<td>当前 Router 从 NameNode 成功响应中确认过的状态</td>
+</tr>
+<tr>
+<td><code>P(ns,u,nn)</code></td>
+<td><code>PoolAlignmentContext.poolLocalStateId</code></td>
+<td>某个下游连接池向 NameNode 提出的最低状态要求</td>
+</tr>
+<tr>
+<td><code>O(ns)</code></td>
+<td>ONN 的 <code>lastAppliedOrWrittenTxId</code></td>
+<td>Observer 已经应用的 namespace 状态</td>
+</tr>
+</tbody></table>
+<p>一次 coordinated ONN read 能执行的核心条件是：</p>
+<pre><code class="language-text">O(ns) &gt;= P(ns,u,nn)
+</code></pre>
+<p>而 <code>P</code> 至少吸收当前客户端携带的 <code>C(ns)</code>：</p>
+<pre><code class="language-text">P := max(P, C(ns))
+</code></pre>
+<p>因此，对同一个 <code>DFSClient / ClientGSIContext</code>，可以得到：</p>
+<pre><code class="language-text">后续成功读所依赖的 ONN 状态
+    &gt;= 客户端此前已经观察到的状态
+</code></pre>
+<p>这给出了两个重要性质：</p>
+<ol>
+<li><strong>Read-your-writes</strong>：同一客户端成功写后，后续读不能退回到写前状态。</li>
+<li><strong>Monotonic reads</strong>：同一客户端后续读不能比此前已经观察到的状态更旧。</li>
+</ol>
+<p>但它没有承诺：</p>
+<pre><code class="language-text">任何客户端的每次读 == ANN 当前最新状态
+</code></pre>
+<p>其他客户端刚刚提交、但当前客户端和当前 Router 都尚未观察到的写入，仍可能在一个刷新窗口内不可见。</p>
+<h2 id="3-协议与四层-State-ID"><a href="#3-%E5%8D%8F%E8%AE%AE%E4%B8%8E%E5%9B%9B%E5%B1%82-State-ID" class="headerlink" title="3. 协议与四层 State ID"></a>3. 协议与四层 State ID</h2>
+<p>Hadoop IPC 原本已经有一个标量字段：</p>
+<pre><code class="language-protobuf">optional int64 stateId;
+</code></pre>
+<p>它足以表达单个 HA nameservice 的状态。但 RBF Router 后面可能有多个 namespace，单个 long 无法表达：</p>
+<pre><code class="language-text">ns-a -&gt; 100
+ns-b -&gt; 900
+ns-c -&gt; 42
+</code></pre>
+<p>因此，RPC header 又增加了：</p>
+<pre><code class="language-protobuf">optional bytes routerFederatedState;
+</code></pre>
+<p>其内容本质上是：</p>
+<pre><code class="language-text">Map&lt;nameserviceId, stateId&gt;
+</code></pre>
+<p>请求和响应都可以携带这个字段：</p>
+<pre class="mermaid">
+flowchart LR
+    NN["NameNode response<br/>stateId = 120"]
+    R["Router<br/>ns-a → 120"]
+    C["ClientGSIContext<br/>{ns-a: 120, ns-b: 900}"]
+    Q["Next RPC request<br/>routerFederatedState"]
+
+    NN --> R
+    R --> C
+    C --> Q
+    Q --> R
+</pre>
+<p>相关协议定义见 <a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-common-project/hadoop-common/src/main/proto/RpcHeader.proto">RpcHeader.proto</a>。</p>
+<p><strong>客户端状态：<code>ClientGSIContext</code></strong></p>
+<p>客户端收到普通 NameNode 响应时，更新标量 <code>lastSeenStateId</code>；收到 Router 响应时，则按 namespace 合并 <code>routerFederatedState</code>：</p>
+<pre><code class="language-java">// 等价伪代码
+if (response.hasRouterFederatedState()) {
+  for (namespace, state : response.federatedState) {
+    clientState[namespace] = max(clientState[namespace], state);
+  }
+} else {
+  lastSeenStateId = max(lastSeenStateId, response.stateId);
+}
+</code></pre>
+<p>下次请求会把已经保存的 federated state 放回 RPC header。</p>
+<p>这里必须使用 <code>max</code> 合并，而不能让来自不同 Router 的响应相互覆盖。假设客户端先从 Router A 获得 <code>{ns-a: 120}</code>，又从状态较旧的 Router B 收到 <code>{ns-a: 110}</code>，客户端必须继续保持 120。这个行为由 <a href="https://github.com/apache/hadoop/pull/5123">HDFS-16837 / PR #5123</a> 修正。</p>
+<p>源码见 <a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-client/src/main/java/org/apache/hadoop/hdfs/ClientGSIContext.java">ClientGSIContext.java</a>。</p>
+<p><strong>Router 全局状态：<code>RouterStateIdContext</code></strong></p>
+<p>每个 Router 维护：</p>
+<pre><code class="language-text">namespaceIdMap: namespace -&gt; max state observed from NameNode
+</code></pre>
+<p>最重要的不变量是：</p>
+<blockquote>
+<p><code>R(ns)</code> 只能由 NameNode 的成功 RPC 响应推进，不能由客户端请求直接推进。</p>
+</blockquote>
+<p>等价逻辑如下：</p>
+<pre><code class="language-java">// Router 作为下游 NameNode 的 IPC client
+onSuccessfulNameNodeResponse(ns, responseStateId) {
+  routerGlobalState[ns] =
+      max(routerGlobalState[ns], responseStateId);
+}
+
+// Router 作为上游客户端的 IPC server
+onClientRequest(clientFederatedState) {
+  // 不写 routerGlobalState
+}
+</code></pre>
+<p>这是信任边界：NameNode 响应是 Router 可以验证的事实；客户端上报的值只是该客户端声明的读取下限。</p>
+<p>源码见 <a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-rbf/src/main/java/org/apache/hadoop/hdfs/server/federation/router/RouterStateIdContext.java">RouterStateIdContext.java</a>。</p>
+<p><strong>连接池状态：<code>PoolAlignmentContext</code></strong></p>
+<p>客户端状态虽然不能污染 Router 全局状态，但不能被丢弃，否则会破坏跨 Router 的 read-your-writes。</p>
+<p>Router 获取下游连接时，会从当前 RPC 的 federated state 中取出目标 namespace 的值：</p>
+<pre><code class="language-java">// 等价伪代码
+clientState = currentCall.federatedState.getOrDefault(
+    namespace, NO_STATE);
+poolLocalState = max(poolLocalState, clientState);
+</code></pre>
+<p>随后 Router→NameNode 的请求使用 <code>poolLocalStateId</code>：</p>
+<pre><code class="language-java">requestHeader.stateId = poolLocalStateId;
+</code></pre>
+<p>这个逻辑由 <a href="https://github.com/apache/hadoop/pull/5086">HDFS-16826 / PR #5086</a> 补齐：无论连接池是刚创建还是已经存在，每个请求都必须推进客户端 state。</p>
+<p>而 <a href="https://github.com/apache/hadoop/pull/5121">HDFS-16834 / PR #5121</a> 明确拆开了：</p>
+<ul>
+<li><code>sharedGlobalStateId</code>：只接受 NameNode 响应；</li>
+<li><code>poolLocalStateId</code>：接受客户端观察状态。</li>
+</ul>
+<p>这样，一个客户端的状态不会直接成为 Router 全局事实，也不会无条件阻塞其他连接池。</p>
+<p>源码见：</p>
+<ul>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-rbf/src/main/java/org/apache/hadoop/hdfs/server/federation/router/PoolAlignmentContext.java">PoolAlignmentContext.java</a></li>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-rbf/src/main/java/org/apache/hadoop/hdfs/server/federation/router/ConnectionManager.java">ConnectionManager.java</a></li>
+</ul>
+<p><strong>NameNode 真实状态：<code>GlobalStateIdContext</code></strong></p>
+<p>ANN 和 ONN 的 RPC server 都可以安装 <code>GlobalStateIdContext</code>。响应时，它把本机的：</p>
+<pre><code class="language-text">lastAppliedOrWrittenTxId
+</code></pre>
+<p>写入 response header。</p>
+<p>对于 ANN，这表示其当前已写状态；对于 ONN，这表示其当前已应用状态。Router 只有在成功收到响应后，才用这个值推进 <code>R(ns)</code>。</p>
+<p>源码见 <a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/namenode/GlobalStateIdContext.java">GlobalStateIdContext.java</a>。</p>
+<h2 id="4-写后读闭环"><a href="#4-%E5%86%99%E5%90%8E%E8%AF%BB%E9%97%AD%E7%8E%AF" class="headerlink" title="4. 写后读闭环"></a>4. 写后读闭环</h2>
+<p>假设客户端通过 Router A 在 <code>ns-a</code> 完成一次写，ANN 写后 state ID 为 120；随后客户端切换到 Router B 发起读。</p>
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as DFSClient
+    participant RA as Router A
+    participant A as Active NN
+    participant RB as Router B
+    participant O as Observer NN
+
+    C->>RA: write(ns-a)
+    RA->>A: write
+    A-->>RA: SUCCESS, stateId=120
+    Note over RA: R_A(ns-a)=max(R_A,120)
+    RA-->>C: SUCCESS, {ns-a:120}
+    Note over C: C(ns-a)=max(C,120)
+
+    C->>RB: read + {ns-a:120}
+    Note over RB: 不直接修改 R_B<br/>只推进连接池 P=120
+    RB->>O: read, stateId=120
+
+    alt O(ns-a) < 120
+        Note over O: requeue，等待 tail edits
+    else O(ns-a) >= 120
+        O-->>RB: SUCCESS, stateId>=120
+        RB-->>C: read result
+    end
+</pre>
+<p>这里没有 Router A→Router B 的状态同步。跨 Router 一致性来自客户端携带的 <code>{namespace: stateId}</code>。</p>
+<p>因此，“Router A 写、Router B 读”不能简单判定为陈旧读；真正的判断条件是：</p>
+<blockquote>
+<p>是否复用了同一个 <code>DFSClient / ClientGSIContext</code>。</p>
+</blockquote>
+<p>如果应用重建了客户端，或读写由两个完全独立的客户端完成，那么写端观察到的 state 不会自动传到读端。</p>
+<p><strong>HDFS-17156：状态发布必须先于 RPC 成功返回</strong></p>
+<p>仅仅在响应中携带 state ID 还不够。IPC Client 内部还存在一个并发顺序要求：</p>
+<pre><code class="language-java">// 正确顺序的等价伪代码
+alignmentContext.receiveResponseState(header);
+call.complete(response);
+</code></pre>
+<p>如果顺序反过来：</p>
+<pre><code class="language-java">call.complete(response);                    // 唤醒业务线程
+alignmentContext.receiveResponseState(...); // 稍后更新 state
+</code></pre>
+<p>就会出现竞态：</p>
+<ol>
+<li>写 RPC 已经向业务线程返回成功；</li>
+<li>业务线程立即发起 ONN 读；</li>
+<li>客户端 state 尚未从写响应中更新；</li>
+<li>新读携带旧 state，可能读到写前结果。</li>
+</ol>
+<p><a href="https://github.com/apache/hadoop/pull/5951">HDFS-17156 / PR #5951</a> 将 state 接收放到唤醒调用者之前，使“写成功返回”同时成为 state 已发布的 happens-before 边界。</p>
+<p>源码见 <a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/ipc/Client.java">Client.java</a>。</p>
+<h2 id="5-Router-路由与-ONN-对齐"><a href="#5-Router-%E8%B7%AF%E7%94%B1%E4%B8%8E-ONN-%E5%AF%B9%E9%BD%90" class="headerlink" title="5. Router 路由与 ONN 对齐"></a>5. Router 路由与 ONN 对齐</h2>
+<p>Router 并不是只要方法可读就永远选择 ONN。3.4.1 的核心条件可简化为：</p>
+<pre><code class="language-java">observerFirst =
+    methodIsObserverReadable
+    &amp;&amp; namespaceStateIsFresh
+    &amp;&amp; clientCarriesStateFor(namespace);
+</code></pre>
+<p>如果条件不满足，Router 将这次实际读直接路由到 ANN，而不是先向 ANN <code>msync</code>、再到 ONN 读。</p>
+<p>这带来一个很重要的启动行为：</p>
+<pre><code class="language-text">客户端第一次读：
+    没有 namespace state
+    → 实际读走 ANN
+    → 从响应中获得 federated state
+
+后续读：
+    客户端已经携带 namespace state
+    → 可以优先走 ONN
+</code></pre>
+<p>源码见 <a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-rbf/src/main/java/org/apache/hadoop/hdfs/server/federation/router/RouterRpcClient.java">RouterRpcClient.java</a>。</p>
+<p><strong>周期 Active refresh</strong></p>
+<p>配置：</p>
+<pre><code class="language-xml">&lt;name&gt;dfs.federation.router.observer.state.id.refresh.period&lt;/name&gt;
+&lt;value&gt;15s&lt;/value&gt;
+</code></pre>
+<p>当 Router 认为某 namespace 距离上次 Active 调用已经超过刷新周期时，下一次实际读会优先访问 ANN。ANN 的响应既返回本次读结果，也刷新 Router 和客户端的 state。</p>
+<p>这个机制由 <a href="https://github.com/apache/hadoop/pull/5298">HDFS-16890 / PR #5298</a> 引入，解决的是：</p>
+<blockquote>
+<p>当前 Router 和当前客户端都没有观察到的外部写入，不能永远被 ONN 旧状态遮蔽。</p>
+</blockquote>
+<p>但它仍然不是线性一致性屏障：</p>
+<ul>
+<li>在 refresh period 内，其他客户端的最新写可能暂时不可见；</li>
+<li>刷新时间在路由到 Active 时更新，并不是一个“Active 响应成功后才提交”的严格 barrier；</li>
+<li>并发过期请求也不应被理解为全局 single-flight 刷新。</li>
+</ul>
+<p>因此，它更准确的定位是 <strong>有界发现机制</strong>，而不是“所有读都追到 ANN 最新 txid”的证明。</p>
+<p><strong>ONN 的执行、Requeue 与拒绝路径</strong></p>
+<p>ONN 收到 coordinated read 后，先由 <code>GlobalStateIdContext</code> 检查请求 state。</p>
+<p><strong>请求没有 state ID</strong></p>
+<p>如果 Observer 收到没有 state ID 的请求，它不能证明客户端允许读取到哪个历史位置，因此抛出 <code>StandbyException</code>，让请求离开 Observer 路径。</p>
+<p><strong>Observer 只是小幅落后</strong></p>
+<p>当客户端 state 在可等待范围内，RPC 被标记为 coordinated call。Handler 从 call queue 取出请求时检查：</p>
+<pre><code class="language-java">// 等价伪代码
+if (call.clientStateId &gt; observer.lastAppliedStateId) {
+  requeue(call);
+  continue;
+}
+execute(call);
+</code></pre>
+<p>这不是线程在原地 sleep，而是重新入队，等待 edit tailer 推进 ONN state 后再次调度。</p>
+<p>源码见 <a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/ipc/Server.java">Server.java</a>。</p>
+<p><strong>Observer 落后过多</strong></p>
+<p>如果根据 RPC 最大等待时间和估算事务速率判断 ONN 不可能及时追上，<code>GlobalStateIdContext</code> 抛出 <code>RetriableException</code>。</p>
+<p>这里要区分两类异常：</p>
+<ul>
+<li><code>RetriableException</code>：当前 Router RPC 会向上层返回可重试错误，由外层 retry/failover 策略决定下一步；</li>
+<li><code>ObserverRetryOnActiveException</code>：Router 明确停止尝试 Observer，直接转向 Active。</li>
+</ul>
+<p>不能把所有“Observer 落后”都描述为 Router 在同一次调用中必然自动 fallback ANN。</p>
+<h2 id="6-一致性场景与边界"><a href="#6-%E4%B8%80%E8%87%B4%E6%80%A7%E5%9C%BA%E6%99%AF%E4%B8%8E%E8%BE%B9%E7%95%8C" class="headerlink" title="6. 一致性场景与边界"></a>6. 一致性场景与边界</h2>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>3.4.1 行为</th>
+<th>保证</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>同一 Router、同一客户端成功写后读</td>
+<td>写响应推进客户端 <code>C(ns)</code>，后续读携带该 state</td>
+<td>保证 read-your-writes</td>
+</tr>
+<tr>
+<td>同一 Router、同一客户端任意成功 Active RPC 后读</td>
+<td>成功 Active 响应同样推进 state</td>
+<td>后续读不早于已观察状态</td>
+</tr>
+<tr>
+<td>Router A 写、Router B 读，同一客户端</td>
+<td>客户端把 federated state 从 A 带到 B</td>
+<td>不依赖 Router 间同步，仍可保证写后读</td>
+</tr>
+<tr>
+<td>直连 ANN 写，再新建 Router 客户端读</td>
+<td>两个客户端上下文通常不共享 state</td>
+<td>新客户端首次读通常走 ANN；已有旧状态客户端可能在刷新窗口内陈旧</td>
+</tr>
+<tr>
+<td>其他客户端写，当前客户端读</td>
+<td>当前客户端不知道对方写后的 state</td>
+<td>不保证立即最新，依赖后续 Active 观察或周期 refresh</td>
+</tr>
+</tbody></table>
+<p>由此可以得到一个简洁边界：</p>
+<pre><code class="language-text">同一 ClientGSIContext：
+    保证自己已经观察过的状态不会丢失
+
+不同 ClientGSIContext：
+    不保证立即观察到对方的最新写
+</code></pre>
+<p><strong>响应头 state 可能领先于本次读结果</strong></p>
+<p>假设另一个客户端刚通过当前 Router 完成写入，使 <code>R(ns)=120</code>；当前读客户端只携带 <code>C(ns)=100</code>，而 ONN 已应用到 105。该 ONN 已满足当前请求的下限，因此可以返回基于 105 的结果。与此同时，Router 响应头可能把全局已知的 120 返回给客户端。</p>
+<p>于是：</p>
+<pre><code class="language-text">本次读结果可能只反映 state 105
+响应结束后客户端 state 被推进到 120
+下一次 coordinated read 必须等待 ONN &gt;= 120
+</code></pre>
+<p>因此，Router 返回的 federated state 更准确地说是 <strong>供后续请求使用的一致性下限</strong>，不能机械地理解成“本次响应数据必然来自该 state 的完整快照”。</p>
+<p><strong>客户端 state 大于 Router state</strong></p>
+<p>假设：</p>
+<pre><code class="language-text">Router B: R(ns-a)=100
+Client:   C(ns-a)=120
+ONN:      O(ns-a)=115
+</code></pre>
+<p>Router B 的处理是：</p>
+<pre><code class="language-text">R(ns-a) 保持 100
+P(ns-a,u,nn) 推进到 120
+Router→ONN 请求携带 stateId=120
+</code></pre>
+<p>这正是跨 Router 写后读所需要的：Router B 即使还没有亲自观察到 120，也必须尊重客户端提出的读取下限。</p>
+<p>但 Router 不能把 120 直接写入全局 <code>R(ns-a)</code>，因为客户端输入不是可信的全局事实。只有当某个 NameNode 成功返回真实 state 后，Router 才能推进 <code>R(ns-a)</code>。</p>
+<p><strong>连接池 poisoning 边界</strong></p>
+<p>这项设计也有一个明确风险：<code>poolLocalStateId</code> 只增不减，而且客户端值没有先与 Router 全局 state 做上限校验。恶意或异常客户端如果携带极大的未来 state，可能使相关连接池后续请求持续携带该值：</p>
+<ul>
+<li>ONN 判断自己严重落后并返回可重试错误；</li>
+<li>请求产生额外重试或 Active 压力；</li>
+<li>共享相同 UGI/token 和目标 NameNode 连接池的请求可能受到影响。</li>
+</ul>
+<p>不过，该值不会污染 Router 全局 <code>namespaceIdMap</code>，也不会直接扩散到所有用户的连接池。这是安全性与跨 Router 因果一致性之间的显式权衡。</p>
+<h2 id="7-federated-state-如何减少每次读前-msync"><a href="#7-federated-state-%E5%A6%82%E4%BD%95%E5%87%8F%E5%B0%91%E6%AF%8F%E6%AC%A1%E8%AF%BB%E5%89%8D-msync" class="headerlink" title="7. federated state 如何减少每次读前 msync"></a>7. federated state 如何减少每次读前 <code>msync</code></h2>
+<p>传统的保守路径是：</p>
+<pre><code class="language-text">Client → Router → ANN msync → ONN read
+</code></pre>
+<p>每个逻辑读都被扩展为两个串行下游 RPC：</p>
+<ul>
+<li>ANN 仍然承担 handler、call queue、网络和指标更新开销；</li>
+<li>Router handler 必须等待 <code>msync + ONN read</code>；</li>
+<li>ONN requeue 时，Router handler 的占用时间进一步延长；</li>
+<li>高峰期容易形成 Router 和 ONN 的排队放大。</li>
+</ul>
+<p>federated state 路径则是：</p>
+<pre><code class="language-text">Client → Router → ONN read(stateId=C)
+</code></pre>
+<p>只有在客户端没有 state、Router state freshness 过期，或发生明确 fallback 时才访问 ANN。</p>
+<p>这不是取消一致性，而是把一致性屏障从“每次额外调用 ANN”转换为：</p>
+<pre><code class="language-text">客户端携带因果下限
+    +
+ONN 服务端验证自身是否追平
+</code></pre>
+<p>官方配置文档也明确说明：传播 federated state 可以避免每个 read 都执行 <code>msync</code>，代价是 RPC header 随 namespace 数量增大。见 <a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-rbf/src/main/resources/hdfs-rbf-default.xml">hdfs-rbf-default.xml</a>。</p>
+<p>需要注意，3.4.1 仍保留客户端侧 <code>RouterObserverReadProxyProvider</code> 的 auto-msync 能力：</p>
+<pre><code class="language-text">period &lt; 0：不自动 msync，默认值
+period = 0：每个 read 前 msync
+period &gt; 0：按周期 msync
+</code></pre>
+<p>它是额外的客户端策略，不是 RBF federated state 主链路必须依赖的步骤。</p>
+<h2 id="8-配置与边界"><a href="#8-%E9%85%8D%E7%BD%AE%E4%B8%8E%E8%BE%B9%E7%95%8C" class="headerlink" title="8. 配置与边界"></a>8. 配置与边界</h2>
+<table>
+<thead>
+<tr>
+<th>配置</th>
+<th align="right">3.4.1 默认值</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>dfs.namenode.state.context.enabled</code></td>
+<td align="right"><code>false</code></td>
+<td>NameNode 是否在 RPC 中处理和返回 state ID</td>
+</tr>
+<tr>
+<td><code>dfs.federation.router.observer.read.default</code></td>
+<td align="right"><code>false</code></td>
+<td>Router 是否默认允许 namespace 走 Observer read</td>
+</tr>
+<tr>
+<td><code>dfs.federation.router.observer.read.overrides</code></td>
+<td align="right">空</td>
+<td>按 namespace 反转默认策略</td>
+</tr>
+<tr>
+<td><code>dfs.client.rbf.observer.read.enable</code></td>
+<td align="right"><code>false</code></td>
+<td>普通 RBF client proxy 是否安装 <code>ClientGSIContext</code></td>
+</tr>
+<tr>
+<td><code>dfs.federation.router.observer.federated.state.propagation.maxsize</code></td>
+<td align="right"><code>5</code></td>
+<td>Router 最多传播多少个 namespace state</td>
+</tr>
+<tr>
+<td><code>dfs.federation.router.observer.state.id.refresh.period</code></td>
+<td align="right"><code>15s</code></td>
+<td>多久让实际调用重新优先访问 Active</td>
+</tr>
+<tr>
+<td><code>dfs.client.failover.observer.auto-msync-period.&lt;ns&gt;</code></td>
+<td align="right"><code>-1</code></td>
+<td>特殊 Router observer proxy 的客户端 auto-msync 周期</td>
+</tr>
+</tbody></table>
+<p>其中最容易被忽略的是 propagation max size。</p>
+<p>当 Router 保存的 namespace 数量超过该阈值时，它不会继续把完整 federated state 放入响应。若客户端已经保存旧 map，它可能继续携带旧状态；新写后的 state 又无法传播回来，跨 Router read-your-writes 的前提就会被破坏。</p>
+<p>因此：</p>
+<blockquote>
+<p><code>federated.state.propagation.maxsize</code> 不是单纯的 header 优化参数，它参与一致性能力是否完整生效。</p>
+</blockquote>
+<h2 id="9-生产观测不要只盯-ONN-QPS"><a href="#9-%E7%94%9F%E4%BA%A7%E8%A7%82%E6%B5%8B%E4%B8%8D%E8%A6%81%E5%8F%AA%E7%9B%AF-ONN-QPS" class="headerlink" title="9. 生产观测：不要只盯 ONN QPS"></a>9. 生产观测：不要只盯 ONN QPS</h2>
+<p>RBF Observer read 的性能问题通常是一条排队链：</p>
+<pre class="mermaid">
+flowchart LR
+    C["Client requests"]
+    RQ["Router call queue"]
+    RH["Router handlers"]
+    OQ["ONN call queue"]
+    RR["State alignment requeue"]
+    ET["Edit log tailing"]
+
+    C --> RQ --> RH --> OQ
+    OQ --> RR
+    ET --> RR
+    RR --> OQ
+</pre>
+<p>建议至少同时观测：</p>
+<ul>
+<li>Router client-facing call queue 和 handler 使用量；</li>
+<li>Router→ANN、Router→ONN 的调用量与延迟；</li>
+<li>ONN <code>RequeueCalls</code>；</li>
+<li><code>RpcQueueTimeNumOps</code> 与 <code>RpcProcessingTimeNumOps</code> 的差异；</li>
+<li>ANN last written txid 与 ONN last applied txid 的差值；</li>
+<li>edit tail 周期、单次 tail 延迟和异常；</li>
+<li>Active refresh 和显式 <code>msync</code> 的调用比例；</li>
+<li>RPC percentile/quantile 指标在高 QPS 下的同步更新成本。</li>
+</ul>
+<p><code>RpcQueueTimeNumOps</code> 明显高于 <code>RpcProcessingTimeNumOps</code> 时，不能简单解释为“请求处理很慢”。Coordinated call 每次 requeue 都会产生额外排队尝试，但并不对应一次真正的业务方法执行。</p>
+<h2 id="10-关键-Apache-演进"><a href="#10-%E5%85%B3%E9%94%AE-Apache-%E6%BC%94%E8%BF%9B" class="headerlink" title="10. 关键 Apache 演进"></a>10. 关键 Apache 演进</h2>
+<p>RBF Observer read 不是一个 PR 一次完成的功能，关键演进包括：</p>
+<ol>
+<li><a href="https://issues.apache.org/jira/browse/HDFS-12943">HDFS-12943</a> / <a href="https://issues.apache.org/jira/browse/HDFS-12976">HDFS-12976</a>：建立单 nameservice Observer read、state ID 和客户端代理基础。</li>
+<li><a href="https://github.com/apache/hadoop/pull/4127">HDFS-16767 / PR #4127</a>：Router 可以识别并优先调用 Observer。</li>
+<li><a href="https://github.com/apache/hadoop/pull/4311">HDFS-13522 / PR #4311</a>：增加 federated namespace state，并在 Router 与客户端之间传播。</li>
+<li><a href="https://github.com/apache/hadoop/pull/4748">HADOOP-18406 / PR #4748</a>：把 alignment context 接入多连接 RPC proxy 创建链路。</li>
+<li><a href="https://github.com/apache/hadoop/pull/5086">HDFS-16826 / PR #5086</a>：每个请求都必须推进连接池的客户端 state。</li>
+<li><a href="https://github.com/apache/hadoop/pull/5121">HDFS-16834 / PR #5121</a>：拆分 Router 全局可信状态与连接池客户端状态。</li>
+<li><a href="https://github.com/apache/hadoop/pull/5123">HDFS-16837 / PR #5123</a>：客户端按 namespace 合并多个 Router 返回的最大 state。</li>
+<li><a href="https://github.com/apache/hadoop/pull/5298">HDFS-16890 / PR #5298</a>：增加周期 Active state refresh。</li>
+<li><a href="https://github.com/apache/hadoop/pull/5951">HDFS-17156 / PR #5951</a>：保证 state 发布先于 RPC 调用线程被唤醒。</li>
+</ol>
+<p>这些修复共同说明：分布式一致性往往不只在“核心算法”里。连接池复用、响应完成顺序、跨 Router 合并和刷新失败路径，都会决定设计是否真正闭环。</p>
+<h2 id="11-总结"><a href="#11-%E6%80%BB%E7%BB%93" class="headerlink" title="11. 总结"></a>11. 总结</h2>
+<p>Hadoop 3.4.1 的 RBF Observer read 可以浓缩为三个不变量：</p>
+<p><strong>不变量一：客户端状态是读取下限</strong></p>
+<pre><code class="language-text">后续 ONN read 不得早于同一客户端已经观察到的 namespace state。
+</code></pre>
+<p><strong>不变量二：Router 全局状态只能由 NameNode 证明</strong></p>
+<pre><code class="language-text">客户端 state 可以推进 pool-local requirement，
+但不能直接推进 Router global state。
+</code></pre>
+<p><strong>不变量三：ONN 在服务端完成最终校验</strong></p>
+<pre><code class="language-text">Observer 未追平时，读请求 requeue 或失败；
+不能绕过 state alignment 直接返回旧结果。
+</code></pre>
+<p>这套设计最精妙的地方，不是消灭了 state 同步成本，而是改变了同步发生的位置：</p>
+<ul>
+<li>不再要求每个读都先额外访问 ANN；</li>
+<li>客户端负责携带自己的因果历史；</li>
+<li>Router 负责在多 namespace 和连接池之间隔离可信状态与客户端要求；</li>
+<li>ONN 负责证明自己是否已经追平。</li>
+</ul>
+<p>它提供的是高扩展性的 read-your-writes 与 monotonic reads，而不是跨客户端、跨 Router 的全局线性一致性。理解这条边界，才能正确评估 <code>msync</code>、refresh period、ONN lag 与 Router call queue 之间的取舍。</p>
+<h2 id="参考源码"><a href="#%E5%8F%82%E8%80%83%E6%BA%90%E7%A0%81" class="headerlink" title="参考源码"></a>参考源码</h2>
+<ul>
+<li><a href="https://github.com/apache/hadoop/tree/rel/release-3.4.1">Apache Hadoop 3.4.1 source tree</a></li>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-client/src/main/java/org/apache/hadoop/hdfs/ClientGSIContext.java">ClientGSIContext.java</a></li>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-rbf/src/main/java/org/apache/hadoop/hdfs/server/federation/router/RouterStateIdContext.java">RouterStateIdContext.java</a></li>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-rbf/src/main/java/org/apache/hadoop/hdfs/server/federation/router/PoolAlignmentContext.java">PoolAlignmentContext.java</a></li>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-rbf/src/main/java/org/apache/hadoop/hdfs/server/federation/router/ConnectionManager.java">ConnectionManager.java</a></li>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-rbf/src/main/java/org/apache/hadoop/hdfs/server/federation/router/RouterRpcClient.java">RouterRpcClient.java</a></li>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/namenode/GlobalStateIdContext.java">GlobalStateIdContext.java</a></li>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/ipc/Client.java">Hadoop IPC Client.java</a></li>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/ipc/Server.java">Hadoop IPC Server.java</a></li>
+<li><a href="https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs-rbf/src/test/java/org/apache/hadoop/hdfs/server/federation/router/TestObserverWithRouter.java">TestObserverWithRouter.java</a></li>
+</ul>
+
+    </div>
+
+  <div class="followme">
+    <p>Welcome to my other publishing channels</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="https://github.com/zouhuajian">
+            <span class="icon">
+              <i class="fab fa-github"></i>
+            </span>
+
+            <span class="label">GitHub</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/hadoop/" rel="tag"># hadoop</a>
+              <a href="/tags/rbf/" rel="tag"># rbf</a>
+              <a href="/tags/observer-read/" rel="tag"># observer-read</a>
+          </div>
+
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/01/22/home/" rel="prev" title="Personal Profile">
+      <i class="fa fa-chevron-left"></i> Personal Profile
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+
+  </article>
+
+
+
+
+
+
+          </div>
+
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+
+
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-RBF-Observer-Read-%E7%9A%84%E4%B8%80%E8%87%B4%E6%80%A7%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">1. RBF Observer Read 的一致性问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E4%B8%80%E8%87%B4%E6%80%A7%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">2. 一致性模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E5%8D%8F%E8%AE%AE%E4%B8%8E%E5%9B%9B%E5%B1%82-State-ID"><span class="nav-number">3.</span> <span class="nav-text">3. 协议与四层 State ID</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E5%86%99%E5%90%8E%E8%AF%BB%E9%97%AD%E7%8E%AF"><span class="nav-number">4.</span> <span class="nav-text">4. 写后读闭环</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-Router-%E8%B7%AF%E7%94%B1%E4%B8%8E-ONN-%E5%AF%B9%E9%BD%90"><span class="nav-number">5.</span> <span class="nav-text">5. Router 路由与 ONN 对齐</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-%E4%B8%80%E8%87%B4%E6%80%A7%E5%9C%BA%E6%99%AF%E4%B8%8E%E8%BE%B9%E7%95%8C"><span class="nav-number">6.</span> <span class="nav-text">6. 一致性场景与边界</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-federated-state-%E5%A6%82%E4%BD%95%E5%87%8F%E5%B0%91%E6%AF%8F%E6%AC%A1%E8%AF%BB%E5%89%8D-msync"><span class="nav-number">7.</span> <span class="nav-text">7. federated state 如何减少每次读前 msync</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-%E9%85%8D%E7%BD%AE%E4%B8%8E%E8%BE%B9%E7%95%8C"><span class="nav-number">8.</span> <span class="nav-text">8. 配置与边界</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-%E7%94%9F%E4%BA%A7%E8%A7%82%E6%B5%8B%E4%B8%8D%E8%A6%81%E5%8F%AA%E7%9B%AF-ONN-QPS"><span class="nav-number">9.</span> <span class="nav-text">9. 生产观测：不要只盯 ONN QPS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-%E5%85%B3%E9%94%AE-Apache-%E6%BC%94%E8%BF%9B"><span class="nav-number">10.</span> <span class="nav-text">10. 关键 Apache 演进</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-%E6%80%BB%E7%BB%93"><span class="nav-number">11.</span> <span class="nav-text">11. 总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%BA%90%E7%A0%81"><span class="nav-number">12.</span> <span class="nav-text">参考源码</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Jay.H.Zou"
+      src="/../images/header.jpg">
+  <p class="site-author-name" itemprop="name">Jay.H.Zou</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zouhuajian" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zouhuajian" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:zouhuajianclever@gmail.com" title="E-Mail → mailto:zouhuajianclever@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://github.com/x-coastline" title="https:&#x2F;&#x2F;github.com&#x2F;x-coastline" rel="noopener" target="_blank">Coastline</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+
+
+
+
+<div class="copyright">
+
+  &copy;
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jay.H.Zou</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, securityLevel: 'strict' });
+</script>
+
+</body>
+</html>
