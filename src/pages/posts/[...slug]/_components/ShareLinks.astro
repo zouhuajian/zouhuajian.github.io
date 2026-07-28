@@ -1,5 +1,7 @@
 ---
 import LinkButton from "@/components/LinkButton.astro";
+import IconCopy from "@/assets/icons/IconCopy.svg";
+import IconCheck from "@/assets/icons/IconCheck.svg";
 import { tplStr, useTranslations } from "@/i18n";
 import config from "@/config";
 
@@ -10,7 +12,7 @@ const icons = import.meta.glob<{
   default: (_props: Record<string, unknown>) => unknown;
 }>("/src/assets/icons/socials/*.svg");
 
-const pageUrl = Astro.url;
+const pageUrl = encodeURIComponent(Astro.url.href);
 
 const platformLabel = (name: string) =>
   name.charAt(0).toUpperCase() + name.slice(1);
@@ -24,31 +26,75 @@ const items = await Promise.all(
       (name === "mail"
         ? t.post.sharePostViaEmail
         : tplStr(t.post.sharePostOn, { platform: platformLabel(name) }));
-    return { url, title, Icon };
+    return { name, url, title, Icon };
   })
 );
 ---
 
-{
-  items.some(({ Icon }) => Icon) && (
-    <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start">
-      <span class="italic">{t.post.sharePostIntro}</span>
-      <div class="text-center">
-        {items.map(({ url, title, Icon }) =>
-          Icon ? (
-            <LinkButton
-              href={`${url}${pageUrl}`}
-              class="scale-90 p-2 hover:rotate-6 sm:p-1"
-              title={title}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110" />
-              <span class="sr-only">{title}</span>
-            </LinkButton>
-          ) : null
-        )}
-      </div>
-    </div>
-  )
-}
+<div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+  <span class="text-muted-foreground text-sm font-medium">
+    {t.post.sharePostIntro}
+  </span>
+  <div class="flex items-center gap-3">
+    <button
+      type="button"
+      data-copy-post-link
+      class="text-muted-foreground hover:text-accent inline-flex items-center gap-1.5 text-sm"
+    >
+      <IconCopy data-copy-link-icon class="size-4" aria-hidden="true" />
+      <IconCheck
+        data-copy-link-check
+        class="hidden size-4"
+        aria-hidden="true"
+      />
+      <span data-copy-link-label aria-live="polite">{t.a11y.copyLink}</span>
+    </button>
+    {
+      items.map(({ name, url, title, Icon }) =>
+        Icon ? (
+          <LinkButton
+            href={`${url}${pageUrl}`}
+            class="text-muted-foreground hover:text-accent inline-flex items-center gap-1.5 p-0 text-sm"
+            title={title}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Icon class="inline-block size-4 fill-transparent stroke-current stroke-2 group-hover:fill-transparent" />
+            <span>{platformLabel(name)}</span>
+          </LinkButton>
+        ) : null
+      )
+    }
+  </div>
+</div>
+
+<script
+  is:inline
+  data-astro-rerun
+  define:vars={{
+    copyLabel: t.a11y.copyLink,
+    copiedLabel: t.a11y.linkCopied,
+  }}
+>
+  const copyLinkButton = document.querySelector("[data-copy-post-link]");
+
+  if (copyLinkButton) {
+    copyLinkButton.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(window.location.href);
+
+      const copyIcon = copyLinkButton.querySelector("[data-copy-link-icon]");
+      const checkIcon = copyLinkButton.querySelector("[data-copy-link-check]");
+      const label = copyLinkButton.querySelector("[data-copy-link-label]");
+
+      copyIcon?.classList.add("hidden");
+      checkIcon?.classList.remove("hidden");
+      if (label) label.textContent = copiedLabel;
+
+      window.setTimeout(() => {
+        copyIcon?.classList.remove("hidden");
+        checkIcon?.classList.add("hidden");
+        if (label) label.textContent = copyLabel;
+      }, 2000);
+    });
+  }
+</script>

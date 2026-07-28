@@ -61,6 +61,8 @@ export interface UIStrings {
     noResults: string;
     copyCode: string;
     codeCopied: string;
+    copyLink: string;
+    linkCopied: string;
     goToPreviousPage: string;
     goToNextPage: string;
   };

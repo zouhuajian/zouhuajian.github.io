@@ -8,7 +8,12 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
-  --font-app: var(--font-google-sans-code);
+  --font-app:
+    var(--font-inter), "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+  --font-heading:
+    var(--font-inter), "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+  --font-code:
+    var(--font-google-sans-code), "SFMono-Regular", Consolas, monospace;
 }
 
 /* Light theme values */
@@ -17,7 +22,7 @@
   --background: #fdfdfd;
   --foreground: #282728;
   --body-foreground: rgb(40 39 40 / 82%);
-  --accent: #000000;
+  --accent: #4f46e5;
   --accent-foreground: #ffffff;
   --muted: #e6e6e6;
   --muted-foreground: #6b7280;
@@ -29,8 +34,8 @@
   --background: #212737;
   --foreground: #eaedf3;
   --body-foreground: rgb(234 237 243 / 82%);
-  --accent: #ffffff;
-  --accent-foreground: #212737;
+  --accent: #a5b4fc;
+  --accent-foreground: #181d2a;
   --muted: #343f60;
   --muted-foreground: #afb9ca;
   --border: rgb(234 237 243 / 14%);

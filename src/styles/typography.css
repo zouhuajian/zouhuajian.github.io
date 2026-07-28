@@ -3,7 +3,7 @@
 @layer base {
   /* ===== Override default Tailwind Typography styles ===== */
   .app-prose {
-    @apply prose;
+    @apply prose text-[1.0625rem] leading-[1.75];
 
     h1,
     h2,
@@ -13,8 +13,12 @@
       @apply text-foreground mb-3;
     }
 
+    h2 {
+      @apply mt-10 mb-4 text-[1.75rem] leading-tight not-italic;
+    }
+
     h3 {
-      @apply italic;
+      @apply mt-8 mb-3 text-[1.375rem] leading-snug font-semibold not-italic;
     }
 
     p,
@@ -50,7 +54,11 @@
     }
 
     img {
-      @apply border-border mx-auto border;
+      @apply mx-auto border-0;
+    }
+
+    img[data-bordered="true"] {
+      @apply border-border border;
     }
 
     img[role="button"] {
@@ -66,18 +74,28 @@
     }
 
     table {
+      @apply border-foreground/60 border-collapse border-y;
+
       th,
       td {
-        @apply border-border border p-2;
+        @apply border-border border-0 border-b px-3 py-2.5;
       }
 
       th {
-        @apply py-1.5;
+        @apply font-semibold;
+      }
+
+      tr:last-child td {
+        @apply border-b-0;
       }
     }
 
     code {
-      @apply bg-muted/75 text-foreground rounded p-1 wrap-break-word before:content-none after:content-none;
+      @apply text-foreground wrap-break-word before:content-none after:content-none;
+    }
+
+    :not(pre) > code {
+      @apply bg-muted/45 rounded-[0.25rem] px-[0.28em] py-[0.08em] text-[0.9em] font-medium;
     }
 
     .astro-code code {

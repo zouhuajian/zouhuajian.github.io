@@ -1,12 +1,13 @@
 ---
 author: "Jay H. Zou"
 pubDatetime: 2026-07-28T17:12:31+08:00
-title: "Lance Scalar Index 原理与源码分析（一）：从 Manifest 到查询执行"
+title: "Lance Scalar Index 原理与源码分析（一）"
+lang: zh-CN
 tags:
   - Lance
   - Scalar Index
   - 源码分析
-description: "基于 Lance 9.0 源码，从索引的基本模型出发，分析 Scalar Index 如何通过 Manifest、Index Segment、谓词规划和 Fragment 级读取加速查询。"
+description: "从 Manifest 到查询执行"
 ---
 
 > 本文源码基于 Lance `release/v9.0` 分支的提交 [`d293630df`](https://github.com/lance-format/lance/tree/d293630dff7a0393702e01a88a65da1a6591e867)。文中的代码片段保留了关键控制流，省略了日志、错误处理和无关分支。

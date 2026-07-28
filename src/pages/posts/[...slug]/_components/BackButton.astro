@@ -14,7 +14,7 @@ const t = useTranslations(locale);
     <div class="mt-8 mb-2">
       <LinkButton
         id="back-button"
-        href={getRelativeLocaleUrl(locale, "")}
+        href={getRelativeLocaleUrl(locale, "posts")}
         class="focus-outline hover:text-foreground/75 -ms-2"
       >
         <IconChevronLeft class="inline-block size-6 rtl:rotate-180" />
@@ -23,19 +23,3 @@ const t = useTranslations(locale);
     </div>
   )
 }
-
-<script>
-  function updateGoBackUrl() {
-    const backButton: HTMLAnchorElement | null =
-      document.querySelector("#back-button");
-
-    const backUrl = sessionStorage.getItem("backUrl");
-
-    if (backUrl && backButton) {
-      backButton.href = backUrl;
-    }
-  }
-
-  document.addEventListener("astro:page-load", updateGoBackUrl);
-  updateGoBackUrl();
-</script>
