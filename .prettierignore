@@ -15,3 +15,6 @@
 
 # Ignore MDX files
 *.mdx
+
+# Generated diagrams and their editable Excalidraw sources
+public/images/lance-scalar-index-internals/

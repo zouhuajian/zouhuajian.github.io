@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="930" viewBox="0 0 1440 930" role="img" aria-labelledby="title desc">
+  <title id="title">Fragment-aware scalar index execution</title>
+  <desc id="desc">A scalar index query returns exact rows for F0, F1, and F2. FilteredReadExec reads F0, drops a deleted row in F1, reads F2, and fully filters uncovered fragment F3.</desc>
+  <defs>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#2563eb"/></marker>
+    <marker id="green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#16a34a"/></marker>
+    <style>
+      .title{font:700 31px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .subtitle{font:400 18px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#475569}
+      .node-title{font:700 22px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .operator{font:700 25px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .card-title{font:700 21px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .body{font:400 18px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .small{font:400 16px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .output{font:700 22px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+    </style>
+  </defs>
+  <rect width="1440" height="930" fill="#fff"/>
+  <text x="55" y="55" class="title">Fragment-aware scalar index execution</text>
+  <text x="55" y="95" class="subtitle">Query: 10:00 ≤ event_time &lt; 11:00</text>
+
+  <rect x="65" y="135" width="300" height="105" rx="14" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="104" y="174" class="node-title" fill="#6d28d9">ScalarIndexExpr</text>
+  <text x="104" y="214" class="small" fill="#5b21b6">event_time_idx [10:00, 11:00)</text>
+
+  <rect x="500" y="120" width="370" height="135" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="685" y="158" text-anchor="middle" class="node-title" fill="#1d4ed8">ScalarIndexExec</text>
+  <text x="685" y="198" text-anchor="middle" class="small" fill="#1e3a8a">
+    <tspan x="685" dy="0">Exact = {F0:r1, F1:r0, F2:r0}</tspan>
+    <tspan x="685" dy="27">coverage = {F0, F1, F2}</tspan>
+  </text>
+  <line x1="365" y1="187" x2="490" y2="187" stroke="#2563eb" stroke-width="3" marker-end="url(#blue)"/>
+
+  <rect x="960" y="135" width="380" height="105" rx="14" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="990" y="171" class="node-title" fill="#c2410c" style="font-size:20px">AtMost</text>
+  <text x="990" y="210" class="small" fill="#9a3412">读取 upper candidates 后执行 full_filter</text>
+
+  <rect x="60" y="330" width="1320" height="440" rx="16" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="90" y="384" class="operator">FilteredReadExec</text>
+  <text x="325" y="379" class="small" fill="#475569">index mask + deletion vector + current fragments</text>
+  <line x1="685" y1="255" x2="685" y2="320" stroke="#2563eb" stroke-width="3" marker-end="url(#blue)"/>
+
+  <rect x="90" y="430" width="280" height="265" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="116" y="476" class="card-title" fill="#1d4ed8">F0 · covered</text>
+  <text x="116" y="521" class="body" fill="#1e3a8a">
+    <tspan x="116" dy="0">index → r1</tspan><tspan x="116" dy="35">read r1</tspan><tspan x="116" dy="35">result → 10:15</tspan>
+  </text>
+
+  <rect x="405" y="430" width="280" height="265" rx="14" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+  <text x="431" y="476" class="card-title" fill="#be123c">F1 · covered</text>
+  <text x="431" y="521" class="body" fill="#9f1239">
+    <tspan x="431" dy="0">index → r0</tspan><tspan x="431" dy="35">deletion vector → drop</tspan><tspan x="431" dy="35">result → ∅</tspan>
+  </text>
+
+  <rect x="720" y="430" width="280" height="265" rx="14" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="746" y="476" class="card-title" fill="#15803d">F2 · covered</text>
+  <text x="746" y="521" class="body" fill="#14532d">
+    <tspan x="746" dy="0">index → r0</tspan><tspan x="746" dy="35">read r0</tspan><tspan x="746" dy="35">result → 10:55</tspan>
+  </text>
+
+  <rect x="1035" y="430" width="280" height="265" rx="14" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="1061" y="476" class="card-title" fill="#c2410c">F3 · not covered</text>
+  <text x="1061" y="521" class="body" fill="#9a3412">
+    <tspan x="1061" dy="0">read full live ranges</tspan><tspan x="1061" dy="35">full_filter</tspan><tspan x="1061" dy="35">result → 10:20</tspan>
+  </text>
+
+  <rect x="390" y="825" width="660" height="72" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="720" y="869" text-anchor="middle" class="output" fill="#166534">Final result = {10:15, 10:55, 10:20}</text>
+  <line x1="230" y1="695" x2="535" y2="820" stroke="#16a34a" stroke-width="3" marker-end="url(#green)"/>
+  <line x1="545" y1="695" x2="635" y2="820" stroke="#16a34a" stroke-width="3" marker-end="url(#green)"/>
+  <line x1="860" y1="695" x2="800" y2="815" stroke="#16a34a" stroke-width="3" marker-end="url(#green)"/>
+  <line x1="1175" y1="695" x2="905" y2="820" stroke="#16a34a" stroke-width="3" marker-end="url(#green)"/>
+</svg>

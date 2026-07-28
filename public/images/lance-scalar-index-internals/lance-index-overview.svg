@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="850" viewBox="0 0 1440 850" role="img" aria-labelledby="title desc">
+  <title id="title">Lance indices are independent accelerators</title>
+  <desc id="desc">Lance has scalar, vector, and system indices. Scalar index segments return row masks and fragment coverage to the current dataset reader, while uncovered fragments use a fallback scan.</desc>
+  <defs>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#475569"/></marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#2563eb"/></marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#ea580c"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#059669"/></marker>
+    <style>
+      .title{font:700 31px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .subtitle{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#475569}
+      .section{font:700 24px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .card-title{font:700 22px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .body{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .mono{font:400 16px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"PingFang SC",monospace}
+      .chip{font:600 16px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+    </style>
+  </defs>
+  <rect width="1440" height="850" fill="#fff"/>
+  <text x="55" y="55" class="title">Lance indices are independent accelerators</text>
+  <text x="55" y="94" class="subtitle">索引建立在 row identifiers 之上；数据文件仍是事实来源</text>
+
+  <rect x="55" y="125" width="405" height="145" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="82" y="177" class="card-title" fill="#1d4ed8">Scalar Index</text>
+  <text x="82" y="219" class="body" fill="#1e3a8a">
+    <tspan x="82" dy="0">predicate → row identifiers</tspan>
+    <tspan x="82" dy="27">BTree / Bitmap / Zone Map</tspan>
+  </text>
+
+  <rect x="518" y="125" width="405" height="145" rx="14" fill="#f3e8ff" stroke="#9333ea" stroke-width="2"/>
+  <text x="545" y="177" class="card-title" fill="#7e22ce">Vector Index</text>
+  <text x="545" y="219" class="body" fill="#6b21a8">
+    <tspan x="545" dy="0">query vector → row identifiers + distance</tspan>
+    <tspan x="545" dy="27">IVF / HNSW</tspan>
+  </text>
+
+  <rect x="980" y="125" width="405" height="145" rx="14" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+  <text x="1007" y="177" class="card-title" fill="#334155">System Index</text>
+  <text x="1007" y="219" class="body" fill="#475569">
+    <tspan x="1007" dy="0">internal state → remap / maintenance</tspan>
+    <tspan x="1007" dy="27">not queried directly</tspan>
+  </text>
+
+  <text x="55" y="343" class="section">Scalar query boundary</text>
+
+  <rect x="55" y="375" width="225" height="135" rx="14" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="82" y="425" class="card-title" fill="#c2410c">Filter predicate</text>
+  <text x="82" y="466" class="mono" fill="#9a3412">
+    <tspan x="82" dy="0">event_time</tspan>
+    <tspan x="82" dy="25">[10:00, 11:00)</tspan>
+  </text>
+
+  <rect x="350" y="345" width="395" height="195" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="377" y="394" class="card-title" fill="#1d4ed8">External immutable segments</text>
+  <rect x="382" y="418" width="145" height="75" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="405" y="447" class="mono" fill="#1e3a8a">
+    <tspan x="405" dy="0">segment A</tspan>
+    <tspan x="405" dy="23">F0, F1</tspan>
+  </text>
+  <rect x="557" y="418" width="145" height="75" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="580" y="447" class="mono" fill="#14532d">
+    <tspan x="580" dy="0">segment B</tspan>
+    <tspan x="580" dy="23">F2</tspan>
+  </text>
+  <text x="382" y="521" class="subtitle">loaded only when the query can use them</text>
+
+  <rect x="815" y="375" width="230" height="135" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="842" y="425" class="card-title" fill="#0f172a">Index output</text>
+  <text x="842" y="466" class="mono" fill="#334155">
+    <tspan x="842" dy="0">row mask</tspan>
+    <tspan x="842" dy="25">coverage={F0,F1,F2}</tspan>
+  </text>
+
+  <rect x="1115" y="345" width="270" height="195" rx="14" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <text x="1142" y="394" class="card-title" fill="#047857">Current Dataset reader</text>
+  <text x="1142" y="437" class="mono" fill="#065f46">
+    <tspan x="1142" dy="0">row mask</tspan>
+    <tspan x="1142" dy="24">+ current fragments</tspan>
+    <tspan x="1142" dy="24">+ deletion vectors</tspan>
+    <tspan x="1142" dy="24">+ full filter</tspan>
+  </text>
+
+  <line x1="280" y1="442" x2="340" y2="442" stroke="#ea580c" stroke-width="3" marker-end="url(#arrow-orange)"/>
+  <line x1="745" y1="442" x2="805" y2="442" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <line x1="1045" y1="442" x2="1105" y2="442" stroke="#059669" stroke-width="3" marker-end="url(#arrow-green)"/>
+
+  <text x="55" y="619" class="card-title" fill="#0f172a">Current Dataset version</text>
+  <rect x="55" y="640" width="235" height="80" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="142" y="690" class="card-title" fill="#334155">F0</text>
+  <rect x="315" y="640" width="235" height="80" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="375" y="690" class="body" fill="#334155">F1 + deletes</text>
+  <rect x="575" y="640" width="235" height="80" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="662" y="690" class="card-title" fill="#334155">F2</text>
+  <rect x="835" y="640" width="235" height="80" rx="12" fill="#fff7ed" stroke="#ea580c" stroke-width="2" stroke-dasharray="8 7"/>
+  <text x="875" y="690" class="body" fill="#c2410c">F3 · not indexed</text>
+  <line x1="950" y1="640" x2="1145" y2="545" stroke="#ea580c" stroke-width="2.5" stroke-dasharray="8 7" marker-end="url(#arrow-orange)"/>
+  <text x="1035" y="590" class="subtitle" fill="#c2410c">fallback scan</text>
+
+  <rect x="55" y="770" width="300" height="47" rx="23" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="103" y="800" class="chip" fill="#334155">on-demand loading</text>
+  <rect x="385" y="770" width="300" height="47" rx="23" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="432" y="800" class="chip" fill="#334155">progressive loading</text>
+  <rect x="715" y="770" width="300" height="47" rx="23" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="753" y="800" class="chip" fill="#334155">immutable segments</text>
+  <rect x="1045" y="770" width="340" height="47" rx="23" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="1077" y="800" class="chip" fill="#9a3412">partial coverage is allowed</text>
+</svg>
