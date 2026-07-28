@@ -1,12 +1,13 @@
 ---
 author: "Jay H. Zou"
 pubDatetime: 2026-07-27T17:08:50+08:00
-title: "Hadoop 3.4.1 RBF Observer 读一致性：State ID 传播、ONN 对齐与一致性边界"
+title: "Hadoop 3.4.1 RBF Observer 读一致性"
+lang: zh-CN
 tags:
   - Hadoop
   - RBF
   - Observer Read
-description: "本文讨论 Router-Based Federation 架构下，客户端经 Router 访问 Observer NameNode 时的读一致性实现，重点分析 State ID 传播、ONN 对齐和一致性边界。"
+description: "State ID 传播、ONN 对齐与一致性边界"
 ---
 
 > 本文讨论的是 **Router-Based Federation（RBF）架构下，客户端经 Router 访问 Observer NameNode（ONN）** 的读一致性实现。早期单个 HA nameservice 中由客户端直接使用 `ObserverReadProxyProvider` 访问 ONN 的机制，只作为基础背景，不是本文主体。

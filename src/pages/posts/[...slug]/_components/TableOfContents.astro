@@ -4,42 +4,75 @@ import type { MarkdownHeading } from "astro";
 type Props = {
   headings: MarkdownHeading[];
   title: string;
+  variant: "mobile" | "desktop";
 };
 
-const { headings, title } = Astro.props;
+const { headings, title, variant } = Astro.props;
+const titleId = `table-of-contents-title-${variant}`;
 ---
 
-<aside
-  aria-labelledby="table-of-contents-title"
-  class="mt-8 hidden xl:col-start-2 xl:row-start-1 xl:block"
->
-  <nav
-    aria-labelledby="table-of-contents-title"
-    data-table-of-contents
-    class="border-border sticky top-8 max-h-[calc(100dvh-4rem)] overflow-y-auto border-s ps-4"
-  >
-    <p
-      id="table-of-contents-title"
-      class="text-muted-foreground m-0 text-xs font-semibold tracking-wider uppercase"
+{
+  variant === "mobile" ? (
+    <details class="border-border mt-6 rounded-md border px-4 py-3 xl:hidden">
+      <summary
+        id={titleId}
+        class="text-foreground focus-visible:outline-accent cursor-pointer text-sm font-semibold"
+      >
+        {title}
+      </summary>
+      <nav
+        aria-labelledby={titleId}
+        data-table-of-contents
+        class="mt-3 max-h-[50dvh] overflow-y-auto"
+      >
+        <ol class="m-0 list-none space-y-1.5 p-0">
+          {headings.map(heading => (
+            <li class:list={["m-0", { "ps-3": heading.depth === 3 }]}>
+              <a
+                href={`#${heading.slug}`}
+                data-toc-link
+                data-active="false"
+                class="text-muted-foreground hover:text-accent data-[active=true]:text-accent block py-0.5 text-sm leading-5 no-underline data-[active=true]:font-semibold"
+              >
+                {heading.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </details>
+  ) : (
+    <aside
+      aria-labelledby={titleId}
+      class="hidden xl:col-start-2 xl:row-start-1 xl:block"
     >
-      {title}
-    </p>
+      <nav
+        aria-labelledby={titleId}
+        data-table-of-contents
+        class="border-border sticky top-8 max-h-[calc(100dvh-4rem)] overflow-y-auto border-s ps-4"
+      >
+        <p
+          id={titleId}
+          class="text-muted-foreground m-0 text-xs font-semibold tracking-wider uppercase"
+        >
+          {title}
+        </p>
 
-    <ol class="mt-3 list-none space-y-1.5 p-0">
-      {
-        headings.map(heading => (
-          <li class:list={["m-0", { "ps-3": heading.depth === 3 }]}>
-            <a
-              href={`#${heading.slug}`}
-              data-toc-link
-              data-active="false"
-              class="text-muted-foreground -ms-[17px] block border-s-2 border-transparent ps-[15px] text-xs leading-5 no-underline hover:text-sky-500 data-[active=true]:border-sky-500 data-[active=true]:font-semibold data-[active=true]:text-sky-500"
-            >
-              {heading.text}
-            </a>
-          </li>
-        ))
-      }
-    </ol>
-  </nav>
-</aside>
+        <ol class="mt-3 list-none space-y-1.5 p-0">
+          {headings.map(heading => (
+            <li class:list={["m-0", { "ps-3": heading.depth === 3 }]}>
+              <a
+                href={`#${heading.slug}`}
+                data-toc-link
+                data-active="false"
+                class="text-muted-foreground hover:text-accent data-[active=true]:border-accent data-[active=true]:text-accent -ms-[17px] block border-s-2 border-transparent ps-[15px] text-xs leading-5 no-underline data-[active=true]:font-semibold"
+              >
+                {heading.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </aside>
+  )
+}

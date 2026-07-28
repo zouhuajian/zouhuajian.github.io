@@ -3,6 +3,7 @@ author: "Jay H. Zou"
 pubDatetime: 2019-05-28T16:50:00+08:00
 modDatetime: 2022-01-23T13:56:23+08:00
 title: "Redis 4.0 自动内存碎片整理（Active Defrag）源码分析"
+lang: zh-CN
 tags:
   - Redis
 description: "Redis 4.0 Active Defrag 的源码分析、性能影响与参数调整建议。"

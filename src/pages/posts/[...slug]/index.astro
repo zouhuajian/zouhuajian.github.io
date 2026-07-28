@@ -66,6 +66,7 @@ const locale = Astro.currentLocale ?? config.site.lang;
 const {
   title,
   description,
+  lang,
   ogImage: initOgImage,
   canonicalURL,
   pubDatetime,
@@ -76,6 +77,7 @@ const {
 } = post.data;
 
 const { Content, headings } = await render(post);
+const postLang = lang ?? config.site.lang;
 const t = useTranslations(locale);
 const tocHeadings = headings.filter(
   heading => heading.depth === 2 || heading.depth === 3
@@ -114,6 +116,7 @@ const ogImage = ogImageUrl
   description={description}
   ogImage={ogImage}
   canonicalURL={canonicalURL}
+  lang={postLang}
   pubDatetime={pubDatetime}
   modDatetime={modDatetime}
 >
@@ -124,30 +127,7 @@ const ogImage = ogImageUrl
     class:list={["app-layout", { "mt-8": !config.features.showBackButton }]}
     data-pagefind-body
   >
-    <div class="min-w-0">
-      <BackButton />
-
-      <h1
-        style={{ viewTransitionName: toTransitionName(title) }}
-        class="text-accent inline-block text-2xl font-bold sm:text-3xl"
-      >
-        {title}
-      </h1>
-
-      <div class="my-2 flex items-center gap-2">
-        <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
-        <span
-          aria-hidden="true"
-          class:list={[
-            "text-muted-foreground max-sm:hidden",
-            { hidden: !config.features.editPost?.enabled || hideEditPost },
-          ]}
-        >
-          |
-        </span>
-        <EditPost {hideEditPost} {post} class="max-sm:hidden" />
-      </div>
-    </div>
+    <BackButton />
 
     <div
       class:list={[
@@ -157,18 +137,49 @@ const ogImage = ogImageUrl
         },
       ]}
     >
-      {
-        showTableOfContents && (
-          <TableOfContents
-            headings={tocHeadings}
-            title={t.post.tableOfContents}
-          />
-        )
-      }
+      <div class="max-w-reading min-w-0 xl:col-start-1 xl:row-start-1">
+        <header>
+          <h1
+            style={{ viewTransitionName: toTransitionName(title) }}
+            class="text-foreground inline-block text-3xl leading-tight font-bold tracking-tight sm:text-[2.5rem] sm:leading-[1.15]"
+          >
+            {title}
+          </h1>
 
-      <div class="min-w-0 xl:col-start-1 xl:row-start-1">
+          <p class="text-body-foreground mt-3 text-lg leading-relaxed">
+            {description}
+          </p>
+
+          <div class="mt-3 flex items-center gap-2">
+            <Datetime {pubDatetime} {modDatetime} {timezone} />
+            <span
+              aria-hidden="true"
+              class:list={[
+                "text-muted-foreground max-sm:hidden",
+                {
+                  hidden: !config.features.editPost?.enabled || hideEditPost,
+                },
+              ]}
+            >
+              |
+            </span>
+            <EditPost {hideEditPost} {post} class="max-sm:hidden" />
+          </div>
+        </header>
+
+        {
+          showTableOfContents && (
+            <TableOfContents
+              headings={tocHeadings}
+              title={t.post.tableOfContents}
+              variant="mobile"
+            />
+          )
+        }
+
         <article
           id="article"
+          lang={postLang}
           class:list={[
             "mt-8 w-full",
             "app-prose max-w-reading",
@@ -182,9 +193,7 @@ const ogImage = ogImageUrl
 
         <EditPost class="sm:hidden" {hideEditPost} {post} />
 
-        <BackToTopButton />
-
-        <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8">
+        <ul aria-label={t.post.tagLabel} class="mt-6 flex flex-wrap gap-3">
           {
             tags.map(tag => (
               <Tag tag={slugifyStr(tag)} tagName={tag} size="sm" />
@@ -194,10 +203,20 @@ const ogImage = ogImageUrl
 
         <ShareLinks />
 
-        <hr class="my-8 border-dashed" />
-
         <AdjacentPostNav {prevPost} {nextPost} />
+
+        <BackToTopButton />
       </div>
+
+      {
+        showTableOfContents && (
+          <TableOfContents
+            headings={tocHeadings}
+            title={t.post.tableOfContents}
+            variant="desktop"
+          />
+        )
+      }
     </div>
   </main>
   <Footer />
@@ -213,21 +232,30 @@ const ogImage = ogImageUrl
   function initTableOfContentsScrollSpy() {
     window.__tableOfContentsAbortController?.abort();
 
-    const tableOfContents = document.querySelector("[data-table-of-contents]");
+    const tableOfContents = Array.from(
+      document.querySelectorAll("[data-table-of-contents]")
+    );
     const article = document.getElementById("article");
-    if (!tableOfContents || !article) return;
+    if (tableOfContents.length === 0 || !article) return;
 
-    const items = Array.from(
-      tableOfContents.querySelectorAll("[data-toc-link]")
-    )
-      .map(link => {
+    const itemsByHref = new Map();
+    for (const container of tableOfContents) {
+      for (const link of container.querySelectorAll("[data-toc-link]")) {
         const href = link.getAttribute("href");
         const heading = href
           ? document.getElementById(decodeURIComponent(href.slice(1)))
           : null;
-        return heading ? { heading, link } : null;
-      })
-      .filter(Boolean);
+        if (!href || !heading) continue;
+
+        const item = itemsByHref.get(href) ?? {
+          heading,
+          links: [],
+        };
+        item.links.push(link);
+        itemsByHref.set(href, item);
+      }
+    }
+    const items = Array.from(itemsByHref.values());
 
     if (items.length === 0) return;
 
@@ -235,29 +263,33 @@ const ogImage = ogImageUrl
     window.__tableOfContentsAbortController = controller;
 
     function keepActiveLinkVisible(link) {
-      const containerRect = tableOfContents.getBoundingClientRect();
+      const container = link.closest("[data-table-of-contents]");
+      if (!container || container.clientHeight === 0) return;
+
+      const containerRect = container.getBoundingClientRect();
       const linkRect = link.getBoundingClientRect();
       const padding = 8;
 
       if (linkRect.top < containerRect.top + padding) {
-        tableOfContents.scrollTop -= containerRect.top + padding - linkRect.top;
+        container.scrollTop -= containerRect.top + padding - linkRect.top;
       } else if (linkRect.bottom > containerRect.bottom - padding) {
-        tableOfContents.scrollTop +=
-          linkRect.bottom - containerRect.bottom + padding;
+        container.scrollTop += linkRect.bottom - containerRect.bottom + padding;
       }
     }
 
-    function setActiveLink(activeLink) {
-      for (const { link } of items) {
-        const isActive = link === activeLink;
-        link.dataset.active = String(isActive);
-        if (isActive) {
-          link.setAttribute("aria-current", "location");
-        } else {
-          link.removeAttribute("aria-current");
+    function setActiveItem(activeItem) {
+      for (const item of items) {
+        const isActive = item === activeItem;
+        for (const link of item.links) {
+          link.dataset.active = String(isActive);
+          if (isActive) {
+            link.setAttribute("aria-current", "location");
+            keepActiveLinkVisible(link);
+          } else {
+            link.removeAttribute("aria-current");
+          }
         }
       }
-      keepActiveLinkVisible(activeLink);
     }
 
     function updateActiveLink() {
@@ -279,7 +311,7 @@ const ogImage = ogImageUrl
         activeItem = items[items.length - 1];
       }
 
-      setActiveLink(activeItem.link);
+      setActiveItem(activeItem);
     }
 
     let animationFrame;
@@ -299,6 +331,15 @@ const ogImage = ogImageUrl
       passive: true,
       signal: controller.signal,
     });
+    for (const container of tableOfContents) {
+      for (const link of container.querySelectorAll("[data-toc-link]")) {
+        link.addEventListener(
+          "click",
+          () => link.closest("details")?.removeAttribute("open"),
+          { signal: controller.signal }
+        );
+      }
+    }
     updateActiveLink();
   }
   initTableOfContentsScrollSpy();
@@ -311,7 +352,7 @@ const ogImage = ogImageUrl
       heading.classList.add("group");
       const link = document.createElement("a");
       link.className =
-        "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+        "heading-link ms-2 no-underline opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100";
       link.href = "#" + heading.id;
 
       const span = document.createElement("span");
