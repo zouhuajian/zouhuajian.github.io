@@ -18,11 +18,14 @@
     }
 
     p,
-    strong,
     ol,
     ul,
     figcaption,
-    table,
+    table {
+      @apply text-body-foreground;
+    }
+
+    strong,
     code {
       @apply text-foreground;
     }
@@ -79,7 +82,7 @@
     }
 
     blockquote {
-      @apply border-s-accent/80 wrap-break-word opacity-80;
+      @apply border-s-accent/80 text-body-foreground wrap-break-word not-italic opacity-80;
     }
 
     details:not(.callout) {

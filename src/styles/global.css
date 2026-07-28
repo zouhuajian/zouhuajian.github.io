@@ -22,6 +22,10 @@
 }
 
 @utility max-w-app {
+  @apply max-w-[67rem];
+}
+
+@utility max-w-reading {
   @apply max-w-3xl;
 }
 
