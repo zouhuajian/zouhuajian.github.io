@@ -17,6 +17,7 @@ export interface UIStrings {
     backToTop: string;
     goBack: string;
     editPage: string;
+    tableOfContents: string;
     previousPost: string;
     nextPost: string;
   };
@@ -58,6 +59,8 @@ export interface UIStrings {
     toggleTheme: string;
     searchPlaceholder: string;
     noResults: string;
+    copyCode: string;
+    codeCopied: string;
     goToPreviousPage: string;
     goToNextPage: string;
   };

@@ -14,7 +14,11 @@ import ShareLinks from "./_components/ShareLinks.astro";
 import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
+import TableOfContents from "./_components/TableOfContents.astro";
+import IconCopy from "@/assets/icons/IconCopy.svg";
+import IconCheck from "@/assets/icons/IconCheck.svg";
 import config from "@/config";
+import { useTranslations } from "@/i18n";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts");
@@ -71,7 +75,18 @@ const {
   hideEditPost,
 } = post.data;
 
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
+const t = useTranslations(locale);
+const tocHeadings = headings.filter(
+  heading => heading.depth === 2 || heading.depth === 3
+);
+const hasManualTableOfContents = tocHeadings.some(
+  heading =>
+    heading.text.trim().toLocaleLowerCase() ===
+    t.post.tableOfContents.toLocaleLowerCase()
+);
+const showTableOfContents =
+  tocHeadings.length >= 2 && !hasManualTableOfContents;
 
 let ogImageUrl: string | undefined;
 
@@ -104,96 +119,189 @@ const ogImage = ogImageUrl
 >
   <Header />
 
-  <BackButton />
-
   <main
     id="main-content"
     class:list={["app-layout", { "mt-8": !config.features.showBackButton }]}
     data-pagefind-body
   >
-    <h1
-      style={{ viewTransitionName: toTransitionName(title) }}
-      class="text-accent inline-block text-2xl font-bold sm:text-3xl"
-    >
-      {title}
-    </h1>
+    <div class="min-w-0">
+      <BackButton />
 
-    <div class="my-2 flex items-center gap-2">
-      <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
-      <span
-        aria-hidden="true"
-        class:list={[
-          "text-muted-foreground max-sm:hidden",
-          { hidden: !config.features.editPost?.enabled || hideEditPost },
-        ]}
+      <h1
+        style={{ viewTransitionName: toTransitionName(title) }}
+        class="text-accent inline-block text-2xl font-bold sm:text-3xl"
       >
-        |
-      </span>
-      <EditPost {hideEditPost} {post} class="max-sm:hidden" />
+        {title}
+      </h1>
+
+      <div class="my-2 flex items-center gap-2">
+        <Datetime {pubDatetime} {modDatetime} {timezone} size="lg" />
+        <span
+          aria-hidden="true"
+          class:list={[
+            "text-muted-foreground max-sm:hidden",
+            { hidden: !config.features.editPost?.enabled || hideEditPost },
+          ]}
+        >
+          |
+        </span>
+        <EditPost {hideEditPost} {post} class="max-sm:hidden" />
+      </div>
     </div>
 
-    <article
-      id="article"
+    <div
       class:list={[
-        "mt-8 w-full",
-        "app-prose max-w-app",
-        "prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)",
+        {
+          "xl:grid xl:grid-cols-[minmax(0,48rem)_14rem] xl:gap-12":
+            showTableOfContents,
+        },
       ]}
     >
-      <Content />
-    </article>
+      {
+        showTableOfContents && (
+          <TableOfContents
+            headings={tocHeadings}
+            title={t.post.tableOfContents}
+          />
+        )
+      }
 
-    <hr class="my-8 border-dashed" />
+      <div class="min-w-0 xl:col-start-1 xl:row-start-1">
+        <article
+          id="article"
+          class:list={[
+            "mt-8 w-full",
+            "app-prose max-w-reading",
+            "prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)",
+          ]}
+        >
+          <Content />
+        </article>
 
-    <EditPost class="sm:hidden" {hideEditPost} {post} />
+        <hr class="my-8 border-dashed" />
 
-    <BackToTopButton />
+        <EditPost class="sm:hidden" {hideEditPost} {post} />
 
-    <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8">
-      {tags.map(tag => <Tag tag={slugifyStr(tag)} tagName={tag} size="sm" />)}
-    </ul>
+        <BackToTopButton />
 
-    <ShareLinks />
+        <ul class="mt-4 mb-8 flex flex-wrap gap-4 sm:my-8">
+          {
+            tags.map(tag => (
+              <Tag tag={slugifyStr(tag)} tagName={tag} size="sm" />
+            ))
+          }
+        </ul>
 
-    <hr class="my-8 border-dashed" />
+        <ShareLinks />
 
-    <AdjacentPostNav {prevPost} {nextPost} />
+        <hr class="my-8 border-dashed" />
+
+        <AdjacentPostNav {prevPost} {nextPost} />
+      </div>
+    </div>
   </main>
   <Footer />
+  <template id="copy-code-icon" data-label={t.a11y.copyCode}>
+    <IconCopy class="size-3" aria-hidden="true" />
+  </template>
+  <template id="copied-code-icon" data-label={t.a11y.codeCopied}>
+    <IconCheck class="size-3" aria-hidden="true" />
+  </template>
 </PostLayout>
 
 <script is:inline data-astro-rerun>
-  function createProgressBar() {
-    const progressContainer = document.createElement("div");
-    progressContainer.className =
-      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+  function initTableOfContentsScrollSpy() {
+    window.__tableOfContentsAbortController?.abort();
 
-    const progressBar = document.createElement("div");
-    progressBar.className = "progress-bar h-1 w-0 bg-accent";
-    progressBar.id = "myBar";
+    const tableOfContents = document.querySelector("[data-table-of-contents]");
+    const article = document.getElementById("article");
+    if (!tableOfContents || !article) return;
 
-    progressContainer.appendChild(progressBar);
-    document.body.appendChild(progressContainer);
-  }
-  createProgressBar();
+    const items = Array.from(
+      tableOfContents.querySelectorAll("[data-toc-link]")
+    )
+      .map(link => {
+        const href = link.getAttribute("href");
+        const heading = href
+          ? document.getElementById(decodeURIComponent(href.slice(1)))
+          : null;
+        return heading ? { heading, link } : null;
+      })
+      .filter(Boolean);
 
-  function updateScrollProgress() {
-    document.addEventListener("scroll", () => {
-      const winScroll =
-        document.body.scrollTop || document.documentElement.scrollTop;
-      const height =
-        document.documentElement.scrollHeight -
-        document.documentElement.clientHeight;
-      const scrolled = (winScroll / height) * 100;
-      if (document) {
-        const myBar = document.getElementById("myBar");
-        if (myBar) {
-          myBar.style.width = scrolled + "%";
+    if (items.length === 0) return;
+
+    const controller = new AbortController();
+    window.__tableOfContentsAbortController = controller;
+
+    function keepActiveLinkVisible(link) {
+      const containerRect = tableOfContents.getBoundingClientRect();
+      const linkRect = link.getBoundingClientRect();
+      const padding = 8;
+
+      if (linkRect.top < containerRect.top + padding) {
+        tableOfContents.scrollTop -= containerRect.top + padding - linkRect.top;
+      } else if (linkRect.bottom > containerRect.bottom - padding) {
+        tableOfContents.scrollTop +=
+          linkRect.bottom - containerRect.bottom + padding;
+      }
+    }
+
+    function setActiveLink(activeLink) {
+      for (const { link } of items) {
+        const isActive = link === activeLink;
+        link.dataset.active = String(isActive);
+        if (isActive) {
+          link.setAttribute("aria-current", "location");
+        } else {
+          link.removeAttribute("aria-current");
         }
       }
+      keepActiveLinkVisible(activeLink);
+    }
+
+    function updateActiveLink() {
+      const activationLine = Math.min(window.innerHeight * 0.25, 160);
+      let activeItem = items[0];
+
+      for (const item of items) {
+        if (item.heading.getBoundingClientRect().top <= activationLine) {
+          activeItem = item;
+        } else {
+          break;
+        }
+      }
+
+      const reachedPageEnd =
+        window.scrollY + window.innerHeight >=
+        document.documentElement.scrollHeight - 2;
+      if (reachedPageEnd) {
+        activeItem = items[items.length - 1];
+      }
+
+      setActiveLink(activeItem.link);
+    }
+
+    let animationFrame;
+    function requestUpdate() {
+      if (animationFrame) return;
+      animationFrame = requestAnimationFrame(() => {
+        animationFrame = undefined;
+        updateActiveLink();
+      });
+    }
+
+    window.addEventListener("scroll", requestUpdate, {
+      passive: true,
+      signal: controller.signal,
     });
+    window.addEventListener("resize", requestUpdate, {
+      passive: true,
+      signal: controller.signal,
+    });
+    updateActiveLink();
   }
-  updateScrollProgress();
+  initTableOfContentsScrollSpy();
 
   function addHeadingLinks() {
     const headings = Array.from(
@@ -216,8 +324,23 @@ const ogImage = ogImageUrl
   addHeadingLinks();
 
   function attachCopyButtons() {
-    const copyButtonLabel = "Copy";
+    const copyIcon = document.getElementById("copy-code-icon");
+    const copiedIcon = document.getElementById("copied-code-icon");
+    if (!copyIcon || !copiedIcon) return;
+
     const codeBlocks = Array.from(document.querySelectorAll("pre"));
+
+    function setCopyButtonState(button, iconTemplate) {
+      const label = iconTemplate.dataset.label ?? "";
+      const accessibleLabel = document.createElement("span");
+      accessibleLabel.className = "sr-only";
+      accessibleLabel.textContent = label;
+
+      button.replaceChildren(
+        iconTemplate.content.cloneNode(true),
+        accessibleLabel
+      );
+    }
 
     for (const codeBlock of codeBlocks) {
       if (codeBlock.dataset.language === "mermaid") continue;
@@ -234,8 +357,10 @@ const ogImage = ogImageUrl
         : "-top-3";
 
       const copyButton = document.createElement("button");
-      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
-      copyButton.innerHTML = copyButtonLabel;
+      copyButton.className = `copy-code absolute end-3 ${topClass} inline-flex size-6 items-center justify-center rounded border border-muted bg-muted text-foreground transition-colors hover:bg-muted/80`;
+      copyButton.type = "button";
+      copyButton.setAttribute("aria-live", "polite");
+      setCopyButtonState(copyButton, copyIcon);
       codeBlock.setAttribute("tabindex", "0");
       codeBlock.appendChild(copyButton);
 
@@ -253,10 +378,10 @@ const ogImage = ogImageUrl
 
       await navigator.clipboard.writeText(text ?? "");
 
-      button.innerText = "Copied";
+      setCopyButtonState(button, copiedIcon);
 
       setTimeout(() => {
-        button.innerText = copyButtonLabel;
+        setCopyButtonState(button, copyIcon);
       }, 700);
     }
   }
