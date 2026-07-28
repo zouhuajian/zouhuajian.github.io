@@ -348,16 +348,9 @@ const ogImage = ogImageUrl
       const wrapper = document.createElement("div");
       wrapper.style.position = "relative";
 
-      const computedStyle = getComputedStyle(codeBlock);
-      const hasFileNameOffset =
-        computedStyle.getPropertyValue("--file-name-offset").trim() !== "";
-
-      const topClass = hasFileNameOffset
-        ? "top-(--file-name-offset)"
-        : "-top-3";
-
       const copyButton = document.createElement("button");
-      copyButton.className = `copy-code absolute end-3 ${topClass} inline-flex size-6 items-center justify-center rounded border border-muted bg-muted text-foreground transition-colors hover:bg-muted/80`;
+      copyButton.className =
+        "copy-code text-muted-foreground absolute top-2 end-2 inline-flex size-5 items-center justify-center rounded-sm border border-border bg-muted/70 opacity-60 transition hover:bg-muted hover:text-foreground hover:opacity-100 focus-visible:bg-muted focus-visible:text-foreground focus-visible:opacity-100";
       copyButton.type = "button";
       copyButton.setAttribute("aria-live", "polite");
       setCopyButtonState(copyButton, copyIcon);

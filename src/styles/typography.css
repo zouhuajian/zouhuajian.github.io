@@ -20,8 +20,11 @@
     p,
     ol,
     ul,
-    figcaption,
     table {
+      @apply text-foreground/90;
+    }
+
+    figcaption {
       @apply text-body-foreground;
     }
 

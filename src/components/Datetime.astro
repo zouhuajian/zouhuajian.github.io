@@ -37,14 +37,9 @@ const date = datetime.format("D MMM, YYYY");
 ---
 
 <div
-  class:list={["text-muted-foreground flex items-center gap-x-2", className]}
+  class:list={["text-muted-foreground flex items-center gap-x-1.5", className]}
 >
-  <IconCalendar
-    class:list={[
-      "inline-block size-6 min-w-5.5",
-      { "scale-90": size === "sm" },
-    ]}
-  />
+  <IconCalendar class="inline-block size-4 shrink-0" />
   {
     isModified && (
       <span class:list={["text-sm", { "sm:text-base": size === "lg" }]}>
