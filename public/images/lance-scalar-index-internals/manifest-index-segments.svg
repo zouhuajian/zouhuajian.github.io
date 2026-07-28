@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="850" viewBox="0 0 1440 850" role="img" aria-labelledby="title desc">
+  <title id="title">Manifest and logical index segments</title>
+  <desc id="desc">The event_time_idx logical index contains segment A covering F0 and F1 and segment B covering F2. F3 belongs to the current dataset but is not indexed.</desc>
+  <defs>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#2563eb"/></marker>
+    <marker id="green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#16a34a"/></marker>
+    <style>
+      .title{font:700 31px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .subtitle{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#475569}
+      .heading{font:700 24px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .card-title{font:700 22px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .body{font:400 17px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"PingFang SC",monospace}
+      .fragment{font:700 26px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .note{font:600 20px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#334155}
+    </style>
+  </defs>
+  <rect width="1440" height="850" fill="#fff"/>
+  <text x="55" y="55" class="title">Manifest and logical index segments</text>
+  <text x="55" y="94" class="subtitle">event_time_idx 由两个物理 segment 组成，当前只覆盖 F0、F1、F2</text>
+
+  <rect x="55" y="145" width="315" height="180" rx="14" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+  <text x="85" y="200" class="heading" fill="#0f172a">Manifest v12</text>
+  <text x="85" y="248" class="body" fill="#334155">
+    <tspan x="85" dy="0">fragments: F0, F1, F2, F3</tspan>
+    <tspan x="85" dy="30">index_section: 0x…</tspan>
+  </text>
+
+  <rect x="480" y="115" width="900" height="340" rx="15" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="510" y="166" class="heading" fill="#0f172a">IndexSection</text>
+  <line x1="370" y1="235" x2="470" y2="235" stroke="#2563eb" stroke-width="3" marker-end="url(#blue)"/>
+  <text x="390" y="218" class="subtitle" fill="#2563eb">offset</text>
+
+  <rect x="530" y="200" width="365" height="205" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="557" y="241" class="card-title" fill="#1d4ed8">segment A</text>
+  <text x="557" y="282" class="body" fill="#1e3a8a">
+    <tspan x="557" dy="0">name: event_time_idx</tspan>
+    <tspan x="557" dy="29">uuid: A</tspan>
+    <tspan x="557" dy="29">fragment_bitmap: {F0, F1}</tspan>
+  </text>
+
+  <rect x="965" y="200" width="365" height="205" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="992" y="241" class="card-title" fill="#15803d">segment B</text>
+  <text x="992" y="282" class="body" fill="#14532d">
+    <tspan x="992" dy="0">name: event_time_idx</tspan>
+    <tspan x="992" dy="29">uuid: B</tspan>
+    <tspan x="992" dy="29">fragment_bitmap: {F2}</tspan>
+  </text>
+
+  <text x="55" y="545" class="heading" fill="#0f172a">Current dataset fragments</text>
+  <line x1="710" y1="405" x2="260" y2="570" stroke="#2563eb" stroke-width="2.5" marker-end="url(#blue)"/>
+  <line x1="710" y1="405" x2="542" y2="570" stroke="#2563eb" stroke-width="2.5" marker-end="url(#blue)"/>
+  <line x1="1147" y1="405" x2="897" y2="570" stroke="#16a34a" stroke-width="2.5" marker-end="url(#green)"/>
+
+  <rect x="60" y="580" width="285" height="150" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="202.5" y="621" text-anchor="middle" class="fragment" fill="#1d4ed8">F0</text>
+  <text x="102" y="665" class="body" fill="#1e3a8a">
+    <tspan x="102" dy="0">r0 = 09:30</tspan><tspan x="102" dy="28">r1 = 10:15</tspan>
+  </text>
+
+  <rect x="400" y="580" width="285" height="150" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="542.5" y="621" text-anchor="middle" class="fragment" fill="#1d4ed8">F1</text>
+  <text x="442" y="665" class="body" fill="#1e3a8a">
+    <tspan x="442" dy="0">r0 = 10:40 (deleted)</tspan><tspan x="442" dy="28">r1 = 12:10</tspan>
+  </text>
+
+  <rect x="755" y="580" width="285" height="150" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="897.5" y="621" text-anchor="middle" class="fragment" fill="#15803d">F2</text>
+  <text x="897.5" y="678" text-anchor="middle" class="body" fill="#14532d">r0 = 10:55</text>
+
+  <rect x="1095" y="580" width="285" height="150" rx="14" fill="#fff7ed" stroke="#ea580c" stroke-width="2" stroke-dasharray="8 7"/>
+  <text x="1237.5" y="621" text-anchor="middle" class="fragment" fill="#c2410c">F3</text>
+  <text x="1237.5" y="660" text-anchor="middle" class="body" fill="#9a3412">
+    <tspan x="1237.5" dy="0">r0 = 10:20</tspan><tspan x="1237.5" dy="28">not indexed</tspan>
+  </text>
+
+  <text x="55" y="808" class="note">effective coverage = {F0, F1, F2}；F3 必须执行 fallback read</text>
+</svg>
