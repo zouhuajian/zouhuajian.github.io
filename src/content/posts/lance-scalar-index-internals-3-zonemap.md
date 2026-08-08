@@ -1,7 +1,7 @@
 ---
 author: "Jay H. Zou"
 pubDatetime: 2026-08-08T11:34:01+08:00
-title: "Lance Scalar Index 原理与源码分析（三）：Zone Map 的统计结构与扫描剪枝"
+title: "Lance Scalar Index 原理与源码分析（三）"
 lang: zh-CN
 tags:
   - Lance
@@ -11,7 +11,7 @@ tags:
 description: "Zone Map 的统计结构与扫描剪枝"
 ---
 
-> 本文源码基于 Lance `release/v9.0` 分支的提交 [`d293630df`](https://github.com/lance-format/lance/tree/d293630dff7a0393702e01a88a65da1a6591e867)。文中的代码片段保留关键控制流，并在注释中标出阅读重点。
+> 本文源码基于 Lance `release/v9.0` 分支的提交 [`d293630df`](https://github.com/lance-format/lance/tree/d293630dff7a0393702e01a88a65da1a6591e867)。
 
 [上一篇](/posts/lance-scalar-index-internals-2-btree/) 介绍的 BTree 会排序 `<value, row identifier>`，读取候选 leaf pages，再在页内过滤出精确的 row identifiers。Zone Map 采用的是另一条路径：**不排序、不保存逐行值，只为原始行序中的连续区域保存统计信息**。
 
