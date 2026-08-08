@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">Lance Zone Map build layout</title>
+  <desc id="desc">Rows remain in physical row-address order, are split into fragment-local zones, and produce one statistics row per zone in zonemap.lance.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#2563eb"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#059669"/></marker>
+    <style>
+      .title{font:700 31px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .subtitle{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#475569}
+      .section{font:700 22px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .body{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .small{font:400 15px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .mono{font:400 15px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"PingFang SC",monospace}
+      .mono-bold{font:700 16px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"PingFang SC",monospace}
+      .chip{font:600 15px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+    </style>
+  </defs>
+
+  <rect width="1440" height="900" fill="#ffffff"/>
+  <text x="55" y="55" class="title">Zone Map build: keep row order, summarize zones</text>
+  <text x="55" y="92" class="subtitle">不按 value 排序；每个 zone 只保存统计值与 fragment 内的 Row Address 范围</text>
+
+  <rect x="55" y="135" width="350" height="565" rx="16" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="82" y="180" class="section" fill="#334155">1 · Training scan</text>
+  <text x="82" y="214" class="small" fill="#475569">TrainingOrdering::Addresses</text>
+
+  <rect x="82" y="245" width="296" height="405" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="103" y="279" class="mono-bold" fill="#334155">Fragment F0 · physical order</text>
+  <text x="103" y="315" class="mono" fill="#475569">
+    <tspan x="103" dy="0">offset  0   00:01</tspan>
+    <tspan x="103" dy="27">offset  1   00:04</tspan>
+    <tspan x="103" dy="27">offset  2   00:07</tspan>
+    <tspan x="103" dy="27">offset  3   00:09</tspan>
+    <tspan x="103" dy="36">offset  4   00:10</tspan>
+    <tspan x="103" dy="27">offset  5   00:12</tspan>
+    <tspan x="103" dy="27">offset  6   00:17</tspan>
+    <tspan x="103" dy="27">offset  7   00:19</tspan>
+    <tspan x="103" dy="36">offset  8   00:21</tspan>
+    <tspan x="103" dy="27">offset  9   00:24</tspan>
+    <tspan x="103" dy="27">offset 10   00:27</tspan>
+    <tspan x="103" dy="27">offset 11   00:29</tspan>
+  </text>
+  <rect x="100" y="294" width="255" height="112" rx="8" fill="none" stroke="#2563eb" stroke-width="2"/>
+  <rect x="100" y="415" width="255" height="112" rx="8" fill="none" stroke="#059669" stroke-width="2"/>
+  <rect x="100" y="536" width="255" height="100" rx="8" fill="none" stroke="#7c3aed" stroke-width="2"/>
+
+  <line x1="405" y1="410" x2="485" y2="410" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <text x="425" y="389" class="small" fill="#1d4ed8">chunk</text>
+
+  <rect x="500" y="175" width="380" height="470" rx="16" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="527" y="220" class="section" fill="#1d4ed8">2 · Fragment-local zones</text>
+  <text x="527" y="253" class="small" fill="#1e40af">示例 4 rows/zone · 不跨 fragment</text>
+
+  <rect x="527" y="285" width="326" height="92" rx="11" fill="#ffffff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="548" y="316" class="mono-bold" fill="#1d4ed8">Z0 · F0 offsets [0,4)</text>
+  <text x="548" y="348" class="mono" fill="#1e3a8a">min=00:01  max=00:09</text>
+
+  <rect x="527" y="400" width="326" height="92" rx="11" fill="#ffffff" stroke="#10b981" stroke-width="1.5"/>
+  <text x="548" y="431" class="mono-bold" fill="#047857">Z1 · F0 offsets [4,8)</text>
+  <text x="548" y="463" class="mono" fill="#065f46">min=00:10  max=00:19</text>
+
+  <rect x="527" y="515" width="326" height="92" rx="11" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="548" y="546" class="mono-bold" fill="#6d28d9">Z2 · F0 offsets [8,12)</text>
+  <text x="548" y="578" class="mono" fill="#5b21b6">min=00:21  max=00:29</text>
+
+  <line x1="880" y1="410" x2="960" y2="410" stroke="#059669" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <text x="898" y="389" class="small" fill="#047857">write</text>
+
+  <rect x="975" y="135" width="410" height="565" rx="16" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <text x="1002" y="180" class="section" fill="#047857">3 · zonemap.lance</text>
+  <text x="1002" y="214" class="small" fill="#065f46">one statistics row per zone</text>
+
+  <rect x="1002" y="245" width="356" height="260" rx="11" fill="#ffffff" stroke="#10b981" stroke-width="1.5"/>
+  <text x="1022" y="280" class="mono-bold" fill="#047857">min max null nan frag start len</text>
+  <line x1="1022" y1="294" x2="1337" y2="294" stroke="#a7f3d0" stroke-width="2"/>
+  <text x="1022" y="329" class="mono" fill="#065f46">01  09   0   0    0    0    4</text>
+  <text x="1022" y="370" class="mono" fill="#065f46">10  19   0   0    0    4    4</text>
+  <text x="1022" y="411" class="mono" fill="#065f46">21  29   0   0    0    8    4</text>
+  <text x="1022" y="466" class="small" fill="#047857">统计文件不保存逐行 value / id</text>
+
+  <rect x="1002" y="535" width="356" height="118" rx="11" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="1022" y="568" class="mono-bold" fill="#166534">Schema metadata</text>
+  <text x="1022" y="599" class="mono" fill="#166534">rows_per_zone = "4"</text>
+  <text x="1022" y="628" class="mono" fill="#166534">null_bitmap = global buffer #N</text>
+
+  <rect x="55" y="745" width="1330" height="100" rx="16" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="82" y="784" class="section" fill="#c2410c">Invariant</text>
+  <text x="225" y="784" class="body" fill="#9a3412">rows_per_zone 是容量上限；fragment 边界优先，因此 fragment 尾部可以产生未满 zone。</text>
+  <text x="225" y="818" class="body" fill="#9a3412">删除造成 offset 空洞时，zone_length 保存首尾 offset 的覆盖跨度，宁可多读也不能漏读。</text>
+</svg>
