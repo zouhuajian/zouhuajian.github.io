@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="930" viewBox="0 0 1440 930" role="img" aria-labelledby="title desc">
+  <title id="title">Lance BTree range query page lookup and exact leaf search</title>
+  <desc id="desc">For score between 17 inclusive and 33 exclusive, page_lookup classifies P0 and P2 as partial matches, P1 as a full match, and skips P3. FlatIndex filters boundary pages and returns an exact set of row identifiers.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#2563eb"/></marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#ea580c"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#059669"/></marker>
+    <style>
+      .title{font:700 31px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .subtitle{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#475569}
+      .section{font:700 22px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .body{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .small{font:400 15px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .mono{font:400 15px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"PingFang SC",monospace}
+      .mono-bold{font:700 16px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"PingFang SC",monospace}
+      .chip{font:700 15px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+    </style>
+  </defs>
+
+  <rect width="1440" height="930" fill="#ffffff"/>
+  <text x="55" y="55" class="title">Range query: page candidates first, exact rows second</text>
+  <text x="55" y="92" class="subtitle">WHERE score &gt;= 17 AND score &lt; 33</text>
+
+  <rect x="55" y="130" width="1330" height="170" rx="16" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="82" y="174" class="section" fill="#1d4ed8">1 · page_lookup.lance</text>
+  <text x="82" y="207" class="small" fill="#1e40af">按 min 二分得到连续窗口，再用 max 判断 overlap 与 full coverage</text>
+
+  <rect x="82" y="228" width="280" height="48" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="1.5"/>
+  <text x="102" y="258" class="mono-bold" fill="#c2410c">P0 [10,18]  → Some</text>
+  <rect x="392" y="228" width="280" height="48" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="412" y="258" class="mono-bold" fill="#047857">P1 [20,28]  → All</text>
+  <rect x="702" y="228" width="280" height="48" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="1.5"/>
+  <text x="722" y="258" class="mono-bold" fill="#c2410c">P2 [30,40]  → Some</text>
+  <rect x="1012" y="228" width="330" height="48" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="7 6"/>
+  <text x="1032" y="258" class="mono-bold" fill="#64748b">P3 [45,55]  → Skip</text>
+
+  <line x1="222" y1="300" x2="222" y2="360" stroke="#ea580c" stroke-width="3" marker-end="url(#arrow-orange)"/>
+  <line x1="532" y1="300" x2="532" y2="360" stroke="#059669" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <line x1="842" y1="300" x2="842" y2="360" stroke="#ea580c" stroke-width="3" marker-end="url(#arrow-orange)"/>
+
+  <text x="55" y="391" class="section" fill="#0f172a">2 · page_data.lance / page cache</text>
+
+  <rect x="55" y="420" width="410" height="240" rx="16" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="82" y="461" class="section" fill="#c2410c">P0 · Matches::Some</text>
+  <text x="82" y="500" class="mono" fill="#7c2d12">values  10   12   15   18</text>
+  <text x="82" y="531" class="mono" fill="#7c2d12">ids     r7   r1   r9   r3</text>
+  <line x1="82" y1="553" x2="425" y2="553" stroke="#fdba74" stroke-width="2"/>
+  <text x="82" y="588" class="body" fill="#9a3412">FlatIndex evaluates [17,33)</text>
+  <rect x="82" y="608" width="135" height="34" rx="17" fill="#ffedd5"/>
+  <text x="113" y="631" class="chip" fill="#c2410c">keep r3</text>
+
+  <rect x="515" y="420" width="410" height="240" rx="16" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <text x="542" y="461" class="section" fill="#047857">P1 · Matches::All</text>
+  <text x="542" y="500" class="mono" fill="#065f46">values  20   22   25   28</text>
+  <text x="542" y="531" class="mono" fill="#065f46">ids     r4  r11   r0   r8</text>
+  <line x1="542" y1="553" x2="885" y2="553" stroke="#6ee7b7" stroke-width="2"/>
+  <text x="542" y="588" class="body" fill="#047857">整个 page 已被目录证明命中</text>
+  <rect x="542" y="608" width="250" height="34" rx="17" fill="#d1fae5"/>
+  <text x="569" y="631" class="chip" fill="#047857">keep r4,r11,r0,r8</text>
+
+  <rect x="975" y="420" width="410" height="240" rx="16" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="1002" y="461" class="section" fill="#c2410c">P2 · Matches::Some</text>
+  <text x="1002" y="500" class="mono" fill="#7c2d12">values  30   32   35   40</text>
+  <text x="1002" y="531" class="mono" fill="#7c2d12">ids    r10   r2   r5   r6</text>
+  <line x1="1002" y1="553" x2="1345" y2="553" stroke="#fdba74" stroke-width="2"/>
+  <text x="1002" y="588" class="body" fill="#9a3412">FlatIndex evaluates [17,33)</text>
+  <rect x="1002" y="608" width="170" height="34" rx="17" fill="#ffedd5"/>
+  <text x="1031" y="631" class="chip" fill="#c2410c">keep r10,r2</text>
+
+  <line x1="260" y1="660" x2="260" y2="735" stroke="#ea580c" stroke-width="3"/>
+  <line x1="720" y1="660" x2="720" y2="735" stroke="#059669" stroke-width="3"/>
+  <line x1="1180" y1="660" x2="1180" y2="735" stroke="#ea580c" stroke-width="3"/>
+  <line x1="260" y1="735" x2="720" y2="735" stroke="#2563eb" stroke-width="3"/>
+  <line x1="1180" y1="735" x2="720" y2="735" stroke="#2563eb" stroke-width="3"/>
+  <line x1="720" y1="735" x2="720" y2="770" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+
+  <rect x="260" y="785" width="920" height="100" rx="18" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+  <text x="307" y="829" class="section" fill="#1d4ed8">3 · Union leaf results</text>
+  <text x="307" y="860" class="mono-bold" fill="#1e3a8a">SearchResult::Exact { r0, r2, r3, r4, r8, r10, r11 }</text>
+
+  <rect x="55" y="785" width="165" height="100" rx="18" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="84" y="826" class="chip" fill="#475569">P3 not read</text>
+  <text x="84" y="856" class="small" fill="#64748b">min ≥ upper</text>
+
+  <text x="260" y="914" class="subtitle">第一层允许保守地多选 page；第二层过滤边界 page，因此最终 row set 仍然是 Exact</text>
+</svg>

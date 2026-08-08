@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">Lance BTree build pipeline and two-level page layout</title>
+  <desc id="desc">Unsorted values and row identifiers are sorted by value, split into fixed-size leaf pages, and written to page_data.lance with one summary row per page in page_lookup.lance.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#2563eb"/></marker>
+    <marker id="arrow-slate" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#475569"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#059669"/></marker>
+    <style>
+      .title{font:700 31px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .subtitle{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#475569}
+      .section{font:700 22px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .body{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .small{font:400 15px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .mono{font:400 15px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"PingFang SC",monospace}
+      .mono-bold{font:700 16px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"PingFang SC",monospace}
+      .chip{font:600 15px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+    </style>
+  </defs>
+
+  <rect width="1440" height="900" fill="#ffffff"/>
+  <text x="55" y="55" class="title">BTree build: sort once, write two levels</text>
+  <text x="55" y="92" class="subtitle">构建阶段按 value 排序；查询阶段只加载页目录和命中的 leaf pages</text>
+
+  <rect x="55" y="140" width="255" height="335" rx="16" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="82" y="184" class="section" fill="#c2410c">1 · Training scan</text>
+  <text x="82" y="218" class="small" fill="#9a3412">indexed value + row identifier</text>
+
+  <rect x="82" y="245" width="200" height="86" rx="10" fill="#ffffff" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="99" y="273" class="mono-bold" fill="#9a3412">Fragment F0</text>
+  <text x="99" y="300" class="mono" fill="#7c2d12">(25,r0) (12,r1)</text>
+  <text x="99" y="323" class="mono" fill="#7c2d12">(32,r2) (18,r3)</text>
+
+  <rect x="82" y="349" width="200" height="92" rx="10" fill="#ffffff" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="99" y="377" class="mono-bold" fill="#9a3412">Other fragments</text>
+  <text x="99" y="404" class="mono" fill="#7c2d12">(20,r4) (35,r5)</text>
+  <text x="99" y="427" class="mono" fill="#7c2d12">(10,r7) ...</text>
+
+  <line x1="310" y1="307" x2="365" y2="307" stroke="#ea580c" stroke-width="3" marker-end="url(#arrow-slate)"/>
+
+  <rect x="380" y="210" width="190" height="194" rx="16" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+  <text x="410" y="254" class="section" fill="#334155">2 · Sort</text>
+  <text x="410" y="294" class="mono" fill="#475569">
+    <tspan x="410" dy="0">value ASC</tspan>
+    <tspan x="410" dy="27">NULLS FIRST</tspan>
+  </text>
+  <rect x="410" y="338" width="130" height="38" rx="19" fill="#e2e8f0"/>
+  <text x="432" y="363" class="chip" fill="#334155">with row id</text>
+
+  <line x1="570" y1="307" x2="625" y2="307" stroke="#475569" stroke-width="3" marker-end="url(#arrow-slate)"/>
+
+  <rect x="640" y="140" width="260" height="335" rx="16" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="667" y="184" class="section" fill="#1d4ed8">3 · Sorted stream</text>
+  <text x="667" y="219" class="small" fill="#1e40af">value order, ids preserved</text>
+  <text x="667" y="258" class="mono" fill="#1e3a8a">
+    <tspan x="667" dy="0">(10,r7)</tspan>
+    <tspan x="667" dy="25">(12,r1)</tspan>
+    <tspan x="667" dy="25">(15,r9)</tspan>
+    <tspan x="667" dy="25">(18,r3)</tspan>
+    <tspan x="667" dy="25">(20,r4)</tspan>
+    <tspan x="667" dy="25">(22,r11)</tspan>
+    <tspan x="667" dy="25">...</tspan>
+  </text>
+  <rect x="667" y="425" width="205" height="32" rx="16" fill="#dbeafe"/>
+  <text x="684" y="447" class="chip" fill="#1d4ed8">chunk_concat_stream</text>
+
+  <line x1="900" y1="307" x2="955" y2="307" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+
+  <rect x="970" y="120" width="415" height="375" rx="16" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <text x="997" y="164" class="section" fill="#047857">4 · Fixed-size leaf pages</text>
+  <text x="997" y="198" class="small" fill="#065f46">示例 4 rows/page · 默认 4096 rows/page</text>
+
+  <rect x="997" y="225" width="170" height="105" rx="11" fill="#ffffff" stroke="#10b981" stroke-width="1.5"/>
+  <text x="1015" y="253" class="mono-bold" fill="#047857">P0 · [10,18]</text>
+  <text x="1015" y="280" class="mono" fill="#065f46">10  12  15  18</text>
+  <text x="1015" y="306" class="mono" fill="#065f46">r7  r1  r9  r3</text>
+
+  <rect x="1188" y="225" width="170" height="105" rx="11" fill="#ffffff" stroke="#10b981" stroke-width="1.5"/>
+  <text x="1206" y="253" class="mono-bold" fill="#047857">P1 · [20,28]</text>
+  <text x="1206" y="280" class="mono" fill="#065f46">20  22  25  28</text>
+  <text x="1206" y="306" class="mono" fill="#065f46">r4 r11  r0  r8</text>
+
+  <rect x="997" y="351" width="170" height="105" rx="11" fill="#ffffff" stroke="#10b981" stroke-width="1.5"/>
+  <text x="1015" y="379" class="mono-bold" fill="#047857">P2 · [30,40]</text>
+  <text x="1015" y="406" class="mono" fill="#065f46">30  32  35  40</text>
+  <text x="1015" y="432" class="mono" fill="#065f46">r10 r2  r5  r6</text>
+
+  <rect x="1188" y="351" width="170" height="105" rx="11" fill="#ffffff" stroke="#10b981" stroke-width="1.5"/>
+  <text x="1206" y="379" class="mono-bold" fill="#047857">P3 · [45,55]</text>
+  <text x="1206" y="406" class="mono" fill="#065f46">45  48  50  55</text>
+  <text x="1206" y="432" class="mono" fill="#065f46">r12 r13 r14 r15</text>
+
+  <line x1="1177" y1="495" x2="1177" y2="555" stroke="#059669" stroke-width="3"/>
+  <line x1="1177" y1="555" x2="380" y2="555" stroke="#059669" stroke-width="3"/>
+  <line x1="1177" y1="555" x2="1060" y2="555" stroke="#059669" stroke-width="3"/>
+  <line x1="380" y1="555" x2="380" y2="605" stroke="#059669" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <line x1="1060" y1="555" x2="1060" y2="605" stroke="#059669" stroke-width="3" marker-end="url(#arrow-green)"/>
+
+  <rect x="75" y="620" width="610" height="210" rx="16" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="105" y="664" class="section" fill="#1d4ed8">page_lookup.lance · one row per page</text>
+  <text x="105" y="701" class="mono-bold" fill="#1e3a8a">min   max   null_count   page_idx</text>
+  <text x="105" y="732" class="mono" fill="#1e3a8a">10    18    0            0</text>
+  <text x="105" y="759" class="mono" fill="#1e3a8a">20    28    0            1</text>
+  <text x="105" y="786" class="mono" fill="#1e3a8a">30    40    0            2</text>
+  <text x="105" y="813" class="mono" fill="#1e3a8a">45    55    0            3</text>
+  <rect x="495" y="695" width="150" height="45" rx="22" fill="#dbeafe"/>
+  <text x="522" y="724" class="chip" fill="#1d4ed8">small directory</text>
+
+  <rect x="755" y="620" width="610" height="210" rx="16" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <text x="785" y="664" class="section" fill="#047857">page_data.lance · full leaf pages</text>
+  <text x="785" y="704" class="mono-bold" fill="#065f46">values                 ids</text>
+  <text x="785" y="735" class="mono" fill="#065f46">10 12 15 18            r7 r1 r9 r3</text>
+  <text x="785" y="762" class="mono" fill="#065f46">20 22 25 28            r4 r11 r0 r8</text>
+  <text x="785" y="789" class="mono" fill="#065f46">30 32 35 40            r10 r2 r5 r6</text>
+  <text x="785" y="816" class="mono" fill="#065f46">45 48 50 55            r12 r13 r14 r15</text>
+  <rect x="1160" y="695" width="165" height="45" rx="22" fill="#d1fae5"/>
+  <text x="1185" y="724" class="chip" fill="#047857">loaded on demand</text>
+
+  <text x="75" y="872" class="subtitle">同一个 batch_size 同时定义 page_data 的 leaf page 和 page_lookup 的一条 summary record</text>
+</svg>
