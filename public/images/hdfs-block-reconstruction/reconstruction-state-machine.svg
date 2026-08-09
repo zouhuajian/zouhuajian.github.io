@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1500"
+  height="1020"
+  viewBox="0 0 1500 1020"
+  role="img"
+>
+  <defs>
+    <marker
+      id="arrowhead"
+      markerWidth="10"
+      markerHeight="8"
+      refX="8"
+      refY="4"
+      orient="auto"
+      markerUnits="strokeWidth"
+    >
+      <path d="M0,0 L9,4 L0,8 Z" fill="#1e1e1e" />
+    </marker>
+    <filter
+      id="rough"
+      filterUnits="userSpaceOnUse"
+      x="-20"
+      y="-20"
+      width="1700"
+      height="1250"
+    >
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.012"
+        numOctaves="1"
+        seed="7"
+        result="noise"
+      />
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="noise"
+        scale="0.45"
+        xChannelSelector="R"
+        yChannelSelector="G"
+      />
+    </filter>
+  </defs>
+  <rect width="1500" height="1020" fill="#ffffff" />
+  <text
+    x="60"
+    y="67.2"
+    text-anchor="start"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="32"
+    font-weight="700"
+    fill="#1e1e1e"
+  >
+    <tspan x="60" dy="0">Reconstruction 队列：由存储事实驱动的状态机</tspan>
+  </text>
+  <text
+    x="60"
+    y="100.6"
+    text-anchor="start"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#495057"
+  >
+    <tspan x="60" dy="0">
+      队列不是持久化任务日志；每次 report、timeout 或 failover
+      都可能触发重新分类
+    </tspan>
+  </text>
+  <text
+    x="60"
+    y="151"
+    text-anchor="start"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="20"
+    font-weight="700"
+    fill="#1e1e1e"
+  >
+    <tspan x="60" dy="0">主路径：发现 → 调度 → 尝试 → 确认</tspan>
+  </text>
+  <rect
+    x="60"
+    y="180"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#fff7ed"
+    stroke="#f97316"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="210"
+    y="230.2"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="210" dy="0">状态变化</tspan>
+    <tspan x="210" dy="20.8">report / failure / failover</tspan>
+  </text>
+  <rect
+    x="425"
+    y="180"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#e0f2fe"
+    stroke="#0284c7"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="575"
+    y="219.8"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="575" dy="0">重新计算事实</tspan>
+    <tspan x="575" dy="20.8">countNodes()</tspan>
+    <tspan x="575" dy="20.8">processMisReplicatedBlock()</tspan>
+  </text>
+  <rect
+    x="790"
+    y="180"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#dbeafe"
+    stroke="#2563eb"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="940"
+    y="230.2"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="940" dy="0">UNDER_REPLICATED</tspan>
+    <tspan x="940" dy="20.8">neededReconstruction</tspan>
+  </text>
+  <rect
+    x="1155"
+    y="180"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#ede9fe"
+    stroke="#7c3aed"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="1305"
+    y="230.2"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="1305" dy="0">RedundancyMonitor</tspan>
+    <tspan x="1305" dy="20.8">source / target / recheck</tspan>
+  </text>
+  <rect
+    x="60"
+    y="430"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#fff7ed"
+    stroke="#f97316"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="210"
+    y="480.2"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="210" dy="0">POSTPONE</tspan>
+    <tspan x="210" dy="20.8">等待 stale reports</tspan>
+  </text>
+  <rect
+    x="425"
+    y="430"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#fef3c7"
+    stroke="#d97706"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="575"
+    y="480.2"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="575" dy="0">OVER_REPLICATED</tspan>
+    <tspan x="575" dy="20.8">excess → invalidation</tspan>
+  </text>
+  <rect
+    x="1155"
+    y="430"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#fef3c7"
+    stroke="#d97706"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="1305"
+    y="480.2"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="1305" dy="0">pendingReconstruction</tspan>
+    <tspan x="1305" dy="20.8">targets + timestamp</tspan>
+  </text>
+  <rect
+    x="60"
+    y="680"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#f8fafc"
+    stroke="#64748b"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="210"
+    y="730.2"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="210" dy="0">OK / UNDER_CONSTRUCTION</tspan>
+    <tspan x="210" dy="20.8">不进入重构队列</tspan>
+  </text>
+  <rect
+    x="425"
+    y="680"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#fee2e2"
+    stroke="#dc2626"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="575"
+    y="730.2"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="575" dy="0">INVALID / DELETE</tspan>
+    <tspan x="575" dy="20.8">进入 invalidation</tspan>
+  </text>
+  <rect
+    x="790"
+    y="680"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#fee2e2"
+    stroke="#dc2626"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="940"
+    y="730.2"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="940" dy="0">pending timeout</tspan>
+    <tspan x="940" dy="20.8">移出并重新评估</tspan>
+  </text>
+  <rect
+    x="1155"
+    y="680"
+    width="300"
+    height="110"
+    rx="18"
+    fill="#dcfce7"
+    stroke="#16a34a"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+  />
+  <text
+    x="1305"
+    y="730.2"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="16"
+    font-weight="500"
+    fill="#1e1e1e"
+  >
+    <tspan x="1305" dy="0">IBR 接受新副本</tspan>
+    <tspan x="1305" dy="20.8">移除 pending target</tspan>
+  </text>
+  <polyline
+    points="360,235 415,235"
+    fill="none"
+    stroke="#1e1e1e"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+    marker-end="url(#arrowhead)"
+  />
+  <polyline
+    points="725,235 780,235"
+    fill="none"
+    stroke="#1e1e1e"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+    marker-end="url(#arrowhead)"
+  />
+  <polyline
+    points="1090,235 1145,235"
+    fill="none"
+    stroke="#1e1e1e"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+    marker-end="url(#arrowhead)"
+  />
+  <polyline
+    points="1305,290 1305,420"
+    fill="none"
+    stroke="#1e1e1e"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+    marker-end="url(#arrowhead)"
+  />
+  <polyline
+    points="1305,540 1305,670"
+    fill="none"
+    stroke="#1e1e1e"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+    marker-end="url(#arrowhead)"
+  />
+  <polyline
+    points="1155,485 1115,485 1115,620 940,620 940,670"
+    fill="none"
+    stroke="#1e1e1e"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+    marker-end="url(#arrowhead)"
+  />
+  <polyline
+    points="850,680 850,300"
+    fill="none"
+    stroke="#1e1e1e"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+    marker-end="url(#arrowhead)"
+  />
+  <polyline
+    points="575,290 575,350 210,350 210,420"
+    fill="none"
+    stroke="#1e1e1e"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+    marker-end="url(#arrowhead)"
+  />
+  <polyline
+    points="360,485 390,485 390,320 500,320 500,300"
+    fill="none"
+    stroke="#1e1e1e"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+    marker-end="url(#arrowhead)"
+  />
+  <polyline
+    points="575,290 575,420"
+    fill="none"
+    stroke="#1e1e1e"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#rough)"
+    marker-end="url(#arrowhead)"
+  />
+  <text
+    x="60"
+    y="636"
+    text-anchor="start"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="20"
+    font-weight="700"
+    fill="#1e1e1e"
+  >
+    <tspan x="60" dy="0">其他分类：等待、删除或退出 reconstruction</tspan>
+  </text>
+  <text
+    x="350"
+    y="331.9"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="14"
+    font-weight="500"
+    fill="#495057"
+  >
+    <tspan x="350" dy="0">reports fresh 后重扫</tspan>
+  </text>
+  <text
+    x="1055"
+    y="571.9"
+    text-anchor="middle"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="14"
+    font-weight="500"
+    fill="#495057"
+  >
+    <tspan x="1055" dy="0">timeout 不是取消 DataNode 任务</tspan>
+  </text>
+  <text
+    x="60"
+    y="881.3"
+    text-anchor="start"
+    font-family="Cascadia Code, SFMono-Regular, Consolas, monospace"
+    font-size="18"
+    font-weight="600"
+    fill="#1e1e1e"
+  >
+    <tspan x="60" dy="0">
+      不变量：只有 block report 接受了新副本，才形成可验证的冗余事实
+    </tspan>
+  </text>
+</svg>
