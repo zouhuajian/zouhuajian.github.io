@@ -1,0 +1,173 @@
+---
+type Props = {
+  label: string;
+};
+
+const { label } = Astro.props;
+---
+
+<span
+  class="text-muted-foreground invisible flex items-center gap-x-2 text-sm sm:text-base"
+  data-post-views
+  aria-busy="true"
+  aria-live="polite"
+>
+  <span aria-hidden="true">|</span>
+  <span class="flex items-center gap-x-1">
+    <span data-post-views-count>0</span>
+    <span>{label}</span>
+  </span>
+</span>
+
+<script>
+  const SHARE_ENDPOINT =
+    "https://gateway-us.umami.is/api/share/0UM0xDjOEV7lsUmi";
+  const WEBSITE_ID = "303e3fb9-2eff-4865-b69e-8621bd5b0b79";
+  const CACHE_TTL_MS = 5 * 60 * 1000;
+  const REQUEST_TIMEOUT_MS = 8000;
+
+  type ShareInfo = {
+    token: string;
+    websiteId: string;
+  };
+
+  type Stats = {
+    pageviews: number;
+  };
+
+  let shareInfoPromise: Promise<ShareInfo> | undefined;
+  const viewCountCache = new Map<
+    string,
+    { count: number; expiresAt: number }
+  >();
+
+  async function fetchWithTimeout(url: string, init?: RequestInit) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(
+      () => controller.abort(),
+      REQUEST_TIMEOUT_MS
+    );
+
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  function getShareInfo() {
+    if (!shareInfoPromise) {
+      shareInfoPromise = fetchWithTimeout(SHARE_ENDPOINT)
+        .then(async response => {
+          if (!response.ok) {
+            throw new Error(`Umami share request failed: ${response.status}`);
+          }
+
+          const shareInfo = (await response.json()) as Partial<ShareInfo>;
+          if (
+            shareInfo.websiteId !== WEBSITE_ID ||
+            typeof shareInfo.token !== "string"
+          ) {
+            throw new Error("Umami share response does not match this site");
+          }
+
+          return {
+            token: shareInfo.token,
+            websiteId: shareInfo.websiteId,
+          };
+        })
+        .catch(error => {
+          shareInfoPromise = undefined;
+          throw error;
+        });
+    }
+
+    return shareInfoPromise;
+  }
+
+  async function getViewCount(path: string) {
+    const cached = viewCountCache.get(path);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.count;
+    }
+
+    const shareInfo = await getShareInfo();
+    const query = new URLSearchParams({
+      startAt: "0",
+      endAt: Date.now().toString(),
+      path,
+      hostname: "zouhuajian.github.io",
+    });
+    const response = await fetchWithTimeout(
+      `https://gateway-us.umami.is/api/websites/${shareInfo.websiteId}/stats?${query}`,
+      {
+        headers: {
+          "x-umami-share-context": "1",
+          "x-umami-share-token": shareInfo.token,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Umami stats request failed: ${response.status}`);
+    }
+
+    const stats = (await response.json()) as Partial<Stats>;
+    const count = stats.pageviews;
+    if (
+      typeof count !== "number" ||
+      !Number.isSafeInteger(count) ||
+      count < 0
+    ) {
+      throw new Error("Umami stats response has an invalid pageview count");
+    }
+
+    viewCountCache.set(path, {
+      count,
+      expiresAt: Date.now() + CACHE_TTL_MS,
+    });
+    return count;
+  }
+
+  async function loadPostViews(element: HTMLElement) {
+    const path = window.location.pathname;
+    if (
+      element.dataset.state === "loading" ||
+      (element.dataset.state === "loaded" && element.dataset.path === path)
+    ) {
+      return;
+    }
+
+    element.dataset.path = path;
+    element.dataset.state = "loading";
+    element.setAttribute("aria-busy", "true");
+    element.classList.add("invisible");
+
+    try {
+      const count = await getViewCount(path);
+      const countElement = element.querySelector<HTMLElement>(
+        "[data-post-views-count]"
+      );
+      if (!countElement) return;
+
+      countElement.textContent = new Intl.NumberFormat(
+        document.documentElement.lang
+      ).format(count);
+      element.dataset.state = "loaded";
+      element.classList.remove("invisible");
+    } catch {
+      element.dataset.state = "error";
+    } finally {
+      element.setAttribute("aria-busy", "false");
+    }
+  }
+
+  function loadCurrentPostViews() {
+    document
+      .querySelectorAll<HTMLElement>("[data-post-views]")
+      .forEach(element => void loadPostViews(element));
+  }
+
+  loadCurrentPostViews();
+  document.addEventListener("astro:page-load", loadCurrentPostViews);
+</script>

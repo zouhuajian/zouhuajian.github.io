@@ -15,6 +15,7 @@ import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
 import TableOfContents from "./_components/TableOfContents.astro";
+import PostViews from "./_components/PostViews.astro";
 import IconCopy from "@/assets/icons/IconCopy.svg";
 import IconCheck from "@/assets/icons/IconCheck.svg";
 import config from "@/config";
@@ -152,6 +153,7 @@ const ogImage = ogImageUrl
 
           <div class="mt-3 flex items-center gap-2">
             <Datetime {pubDatetime} {modDatetime} {timezone} />
+            <PostViews label={t.post.views} />
             <span
               aria-hidden="true"
               class:list={[

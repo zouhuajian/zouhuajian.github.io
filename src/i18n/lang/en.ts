@@ -19,6 +19,7 @@ export default {
     backToTop: "Back to top",
     goBack: "Back to posts",
     editPage: "Edit page",
+    views: "views",
     tableOfContents: "Table of contents",
     previousPost: "Previous Post",
     nextPost: "Next Post",

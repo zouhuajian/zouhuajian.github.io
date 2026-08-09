@@ -17,6 +17,7 @@ export interface UIStrings {
     backToTop: string;
     goBack: string;
     editPage: string;
+    views: string;
     tableOfContents: string;
     previousPost: string;
     nextPost: string;
