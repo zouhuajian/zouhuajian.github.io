@@ -42,13 +42,16 @@ const isActive = (path: string) => {
   {t.a11y.skipToContent}
 </a>
 
-<header class="border-border w-full border-b">
+<header
+  id="site-header"
+  class="border-border bg-background/95 w-full border-b sm:sticky sm:top-0 sm:z-40 sm:backdrop-blur-md"
+>
   <div
-    class="app-layout bg-background relative flex items-baseline justify-between py-4 sm:items-center sm:py-6"
+    class="site-header-inner app-layout relative flex items-baseline justify-between py-4 sm:items-center sm:py-6"
   >
     <a
       href={getRelativeLocaleUrl(locale, "")}
-      class="font-heading absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"
+      class="site-header-title font-heading absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"
     >
       {site.title}
     </a>
@@ -162,7 +165,39 @@ const isActive = (path: string) => {
   </div>
 </header>
 
+<style>
+  @media (min-width: 40rem) {
+    .site-header-inner,
+    .site-header-title {
+      transition-duration: 200ms;
+      transition-property: padding, font-size;
+      transition-timing-function: ease-out;
+    }
+
+    #site-header[data-compact] .site-header-inner {
+      padding-block: 0.75rem;
+    }
+
+    #site-header[data-compact] .site-header-title {
+      font-size: 1.25rem;
+    }
+
+    :global(:target) {
+      scroll-margin-block-start: 6rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-header-inner,
+    .site-header-title {
+      transition-duration: 0ms;
+    }
+  }
+</style>
+
 <script>
+  const COMPACT_HEADER_SCROLL_THRESHOLD = 64;
+
   function toggleNav() {
     const menuBtn = document.querySelector<HTMLButtonElement>("#menu-btn");
     const menuItems = document.querySelector("#menu-items");
@@ -187,7 +222,32 @@ const isActive = (path: string) => {
     });
   }
 
-  toggleNav();
+  function updateHeaderSize() {
+    const header = document.querySelector("#site-header");
+    header?.toggleAttribute(
+      "data-compact",
+      window.scrollY > COMPACT_HEADER_SCROLL_THRESHOLD
+    );
+  }
 
-  document.addEventListener("astro:after-swap", toggleNav);
+  let scrollFrame: number | undefined;
+
+  function handleScroll() {
+    if (scrollFrame !== undefined) return;
+
+    scrollFrame = window.requestAnimationFrame(() => {
+      updateHeaderSize();
+      scrollFrame = undefined;
+    });
+  }
+
+  function initializeHeader() {
+    toggleNav();
+    updateHeaderSize();
+  }
+
+  initializeHeader();
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  document.addEventListener("astro:after-swap", initializeHeader);
 </script>
