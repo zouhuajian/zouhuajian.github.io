@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="790" viewBox="0 0 1440 790" role="img" aria-labelledby="title desc">
+  <title id="title">Bitmap value postings build and query</title>
+  <desc id="desc">Rows are grouped by value into exact compressed row sets. Equals reads one posting and IN unions several postings.</desc>
+  <defs>
+    <style>
+      .title { font: 700 34px Inter, ui-sans-serif, system-ui, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 17px Inter, ui-sans-serif, system-ui, sans-serif; fill: #475569; }
+      .heading { font: 700 20px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .label { font: 650 16px Inter, ui-sans-serif, system-ui, sans-serif; fill: #0f172a; }
+      .body { font: 400 15px Inter, ui-sans-serif, system-ui, sans-serif; fill: #334155; }
+      .mono { font: 600 14px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #334155; }
+      .inverse { fill: #ffffff; }
+      .arrow { stroke: #94a3b8; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <rect width="1440" height="790" fill="#ffffff" />
+  <text x="60" y="58" class="title">Bitmap: one value, one compressed row set</text>
+  <text x="60" y="91" class="subtitle">Value-sorted input is streamed into postings · query cost depends on postings touched (M) and rows returned (H)</text>
+
+  <rect x="60" y="135" width="340" height="445" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+  <text x="88" y="174" class="heading" fill="#334155">Source rows</text>
+  <text x="88" y="204" class="body">Original row identifiers stay attached</text>
+
+  <g class="mono">
+    <rect x="88" y="232" width="284" height="42" rx="8" fill="#dbeafe" /><text x="108" y="258">r0  new</text>
+    <rect x="88" y="282" width="284" height="42" rx="8" fill="#ede9fe" /><text x="108" y="308">r1  running</text>
+    <rect x="88" y="332" width="284" height="42" rx="8" fill="#fee2e2" /><text x="108" y="358">r2  failed</text>
+    <rect x="88" y="382" width="284" height="42" rx="8" fill="#dbeafe" /><text x="108" y="408">r3  new</text>
+    <rect x="88" y="432" width="284" height="42" rx="8" fill="#ede9fe" /><text x="108" y="458">r4  running</text>
+    <rect x="88" y="482" width="284" height="42" rx="8" fill="#f1f5f9" /><text x="108" y="508">r5  NULL</text>
+  </g>
+  <text x="88" y="553" class="body">… more rows from covered fragments</text>
+
+  <path d="M 400 356 L 468 356" class="arrow" />
+  <text x="434" y="334" text-anchor="middle" class="body">group by</text>
+  <text x="434" y="380" text-anchor="middle" class="body">value</text>
+
+  <rect x="480" y="135" width="500" height="445" rx="16" fill="#eff6ff" stroke="#2563eb" stroke-width="2" />
+  <text x="508" y="174" class="heading" fill="#1d4ed8">bitmap_page_lookup.lance</text>
+  <text x="508" y="204" class="body">Each file row stores a key and serialized RowAddrTreeMap</text>
+
+  <rect x="508" y="230" width="444" height="64" rx="10" fill="#ffffff" stroke="#93c5fd" />
+  <text x="528" y="255" class="label">new</text><text x="680" y="255" class="mono">{r0, r3, r8, r11}</text>
+  <text x="528" y="280" class="body">one compressed posting</text>
+
+  <rect x="508" y="310" width="444" height="64" rx="10" fill="#ffffff" stroke="#c4b5fd" />
+  <text x="528" y="335" class="label">running</text><text x="680" y="335" class="mono">{r1, r4, r5}</text>
+  <text x="528" y="360" class="body">loaded lazily and cached by value</text>
+
+  <rect x="508" y="390" width="444" height="64" rx="10" fill="#ffffff" stroke="#fca5a5" />
+  <text x="528" y="415" class="label">failed</text><text x="680" y="415" class="mono">{r2, r9}</text>
+  <text x="528" y="440" class="body">exact row identifiers</text>
+
+  <rect x="508" y="470" width="444" height="64" rx="10" fill="#ffffff" stroke="#cbd5e1" />
+  <text x="528" y="495" class="label">NULL</text><text x="680" y="495" class="mono">{r6, r7, r10}</text>
+  <text x="528" y="520" class="body">precomputed null posting</text>
+
+  <path d="M 980 356 L 1048 356" class="arrow" />
+
+  <rect x="1060" y="135" width="320" height="445" rx="16" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2" />
+  <text x="1088" y="174" class="heading" fill="#6d28d9">Query</text>
+  <rect x="1088" y="220" width="264" height="75" rx="10" fill="#ffffff" stroke="#c4b5fd" />
+  <text x="1106" y="249" class="mono">status = 'failed'</text>
+  <text x="1106" y="276" class="body">load 1 posting · M = 1</text>
+
+  <rect x="1088" y="320" width="264" height="100" rx="10" fill="#ffffff" stroke="#c4b5fd" />
+  <text x="1106" y="349" class="mono">status IN</text>
+  <text x="1106" y="372" class="mono">('new', 'failed')</text>
+  <text x="1106" y="402" class="body">load 2 · union · M = 2</text>
+
+  <rect x="1088" y="450" width="264" height="82" rx="10" fill="#7c3aed" />
+  <text x="1106" y="480" class="heading" fill="#ffffff">Exact</text>
+  <text x="1106" y="508" class="mono inverse">{r0,r2,r3,r8,r9,r11}</text>
+
+  <rect x="60" y="630" width="1320" height="110" rx="16" fill="#fff7ed" stroke="#fb923c" stroke-width="2" />
+  <text x="88" y="671" class="heading" fill="#c2410c">The lookup can be tiny while the result is huge</text>
+  <text x="88" y="704" class="body">Low cardinality reduces postings touched. It does not guarantee a low hit ratio, a small row set, or cheap data reads.</text>
+  <text x="88" y="728" class="body">Always measure both M (values/postings touched) and H (matching rows materialized).</text>
+</svg>

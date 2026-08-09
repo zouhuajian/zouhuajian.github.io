@@ -36,11 +36,11 @@
 }
 
 @utility max-w-app {
-  @apply max-w-[67rem];
+  @apply max-w-[75rem];
 }
 
 @utility max-w-reading {
-  @apply max-w-3xl;
+  @apply max-w-4xl;
 }
 
 @utility app-layout {
