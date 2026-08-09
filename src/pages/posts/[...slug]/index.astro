@@ -153,7 +153,10 @@ const ogImage = ogImageUrl
 
           <div class="mt-3 flex items-center gap-2">
             <Datetime {pubDatetime} {modDatetime} {timezone} />
-            <PostViews label={t.post.views} />
+            <PostViews
+              viewsLabel={t.post.views}
+              visitorsLabel={t.post.visitors}
+            />
             <span
               aria-hidden="true"
               class:list={[

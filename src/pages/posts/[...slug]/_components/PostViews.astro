@@ -1,9 +1,10 @@
 ---
 type Props = {
-  label: string;
+  viewsLabel: string;
+  visitorsLabel: string;
 };
 
-const { label } = Astro.props;
+const { viewsLabel, visitorsLabel } = Astro.props;
 ---
 
 <span
@@ -15,7 +16,12 @@ const { label } = Astro.props;
   <span aria-hidden="true">|</span>
   <span class="flex items-center gap-x-1">
     <span data-post-views-count>0</span>
-    <span>{label}</span>
+    <span>{viewsLabel}</span>
+  </span>
+  <span aria-hidden="true">·</span>
+  <span class="flex items-center gap-x-1">
+    <span data-post-visitors-count>0</span>
+    <span>{visitorsLabel}</span>
   </span>
 </span>
 
@@ -33,12 +39,18 @@ const { label } = Astro.props;
 
   type Stats = {
     pageviews: number;
+    visitors: number;
+  };
+
+  type PostTraffic = {
+    views: number;
+    visitors: number;
   };
 
   let shareInfoPromise: Promise<ShareInfo> | undefined;
-  const viewCountCache = new Map<
+  const postTrafficCache = new Map<
     string,
-    { count: number; expiresAt: number }
+    { traffic: PostTraffic; expiresAt: number }
   >();
 
   async function fetchWithTimeout(url: string, init?: RequestInit) {
@@ -85,10 +97,10 @@ const { label } = Astro.props;
     return shareInfoPromise;
   }
 
-  async function getViewCount(path: string) {
-    const cached = viewCountCache.get(path);
+  async function getPostTraffic(path: string) {
+    const cached = postTrafficCache.get(path);
     if (cached && cached.expiresAt > Date.now()) {
-      return cached.count;
+      return cached.traffic;
     }
 
     const shareInfo = await getShareInfo();
@@ -113,20 +125,25 @@ const { label } = Astro.props;
     }
 
     const stats = (await response.json()) as Partial<Stats>;
-    const count = stats.pageviews;
+    const views = stats.pageviews;
+    const visitors = stats.visitors;
     if (
-      typeof count !== "number" ||
-      !Number.isSafeInteger(count) ||
-      count < 0
+      typeof views !== "number" ||
+      !Number.isSafeInteger(views) ||
+      views < 0 ||
+      typeof visitors !== "number" ||
+      !Number.isSafeInteger(visitors) ||
+      visitors < 0
     ) {
-      throw new Error("Umami stats response has an invalid pageview count");
+      throw new Error("Umami stats response has invalid traffic counts");
     }
 
-    viewCountCache.set(path, {
-      count,
+    const traffic = { views, visitors };
+    postTrafficCache.set(path, {
+      traffic,
       expiresAt: Date.now() + CACHE_TTL_MS,
     });
-    return count;
+    return traffic;
   }
 
   async function loadPostViews(element: HTMLElement) {
@@ -144,15 +161,18 @@ const { label } = Astro.props;
     element.classList.add("invisible");
 
     try {
-      const count = await getViewCount(path);
-      const countElement = element.querySelector<HTMLElement>(
+      const traffic = await getPostTraffic(path);
+      const viewsElement = element.querySelector<HTMLElement>(
         "[data-post-views-count]"
       );
-      if (!countElement) return;
+      const visitorsElement = element.querySelector<HTMLElement>(
+        "[data-post-visitors-count]"
+      );
+      if (!viewsElement || !visitorsElement) return;
 
-      countElement.textContent = new Intl.NumberFormat(
-        document.documentElement.lang
-      ).format(count);
+      const numberFormat = new Intl.NumberFormat(document.documentElement.lang);
+      viewsElement.textContent = numberFormat.format(traffic.views);
+      visitorsElement.textContent = numberFormat.format(traffic.visitors);
       element.dataset.state = "loaded";
       element.classList.remove("invisible");
     } catch {

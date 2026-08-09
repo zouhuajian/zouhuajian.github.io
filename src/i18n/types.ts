@@ -18,6 +18,7 @@ export interface UIStrings {
     goBack: string;
     editPage: string;
     views: string;
+    visitors: string;
     tableOfContents: string;
     previousPost: string;
     nextPost: string;
