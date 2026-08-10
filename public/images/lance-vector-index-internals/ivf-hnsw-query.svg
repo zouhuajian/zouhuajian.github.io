@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">IVF partition routing and partition-local HNSW search in Lance</title>
+  <desc id="desc">A query first ranks IVF centroids, then traverses one HNSW graph per selected partition, merges candidates, and optionally refines them with original vectors.</desc>
+  <defs>
+    <style>
+      .title { font: 700 34px Inter, ui-sans-serif, system-ui, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 17px Inter, ui-sans-serif, system-ui, sans-serif; fill: #475569; }
+      .heading { font: 700 21px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .label { font: 650 17px Inter, ui-sans-serif, system-ui, sans-serif; fill: #0f172a; }
+      .body { font: 400 15px Inter, ui-sans-serif, system-ui, sans-serif; fill: #334155; }
+      .mono { font: 600 14px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #334155; }
+      .small { font: 500 13px Inter, ui-sans-serif, system-ui, sans-serif; fill: #475569; }
+      .inverse { fill: #ffffff; }
+      .arrow { stroke: #94a3b8; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .graph { stroke: #64748b; stroke-width: 2; fill: none; }
+      .route { stroke: #2563eb; stroke-width: 3; fill: none; marker-end: url(#blue-arrow); }
+      .dash { stroke-dasharray: 8 7; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+    </marker>
+    <marker id="blue-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb" />
+    </marker>
+  </defs>
+
+  <rect width="1440" height="900" fill="#ffffff" />
+  <text x="60" y="58" class="title">Lance searches partition-local HNSW graphs</text>
+  <text x="60" y="91" class="subtitle">nprobes opens the outer IVF gate; ef controls traversal inside every selected partition</text>
+
+  <rect x="60" y="130" width="250" height="120" rx="16" fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+  <text x="84" y="168" class="label">Query vector q</text>
+  <text x="84" y="199" class="mono">k=10 · nprobes=2</text>
+  <text x="84" y="226" class="mono">ef=64 · refine=2</text>
+
+  <path d="M 310 190 L 376 190" class="arrow" />
+  <rect x="385" y="130" width="420" height="120" rx="16" fill="#eff6ff" stroke="#2563eb" stroke-width="2" />
+  <text x="412" y="168" class="heading" fill="#1d4ed8">1 · Rank IVF centroids</text>
+  <text x="412" y="200" class="mono">P1: 0.4 · P3: 0.7 · P0: 2.6 · P2: 4.1</text>
+  <text x="412" y="227" class="body">select P1 and P3; other partitions are not searched</text>
+
+  <path d="M 805 190 L 872 190" class="arrow" />
+  <rect x="880" y="130" width="500" height="120" rx="16" fill="#fff7ed" stroke="#ea580c" stroke-width="2" />
+  <text x="908" y="168" class="heading" fill="#c2410c">Two independent recall gates</text>
+  <text x="908" y="201" class="mono">IVF gate: was the right partition selected?</text>
+  <text x="908" y="228" class="mono">HNSW gate: did graph traversal reach the node?</text>
+
+  <path d="M 595 250 L 595 296 L 340 296 L 340 332" class="arrow" />
+  <path d="M 595 296 L 1090 296 L 1090 332" class="arrow" />
+
+  <rect x="60" y="334" width="600" height="340" rx="18" fill="#f8fafc" stroke="#2563eb" stroke-width="2" />
+  <text x="88" y="373" class="heading" fill="#1d4ed8">2 · Search HNSW in partition P1</text>
+  <text x="88" y="403" class="body">entry point → greedy upper levels → bottom beam(ef=64)</text>
+
+  <text x="104" y="458" class="small">upper level</text>
+  <path d="M 210 452 L 330 452 L 460 452" class="graph" />
+  <circle cx="210" cy="452" r="18" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
+  <circle cx="330" cy="452" r="18" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
+  <circle cx="460" cy="452" r="18" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
+  <text x="210" y="457" text-anchor="middle" class="small">0</text>
+  <text x="330" y="457" text-anchor="middle" class="small">4</text>
+  <text x="460" y="457" text-anchor="middle" class="small">7</text>
+  <path d="M 228 442 C 260 420, 294 420, 316 442" class="route" />
+  <path d="M 348 442 C 380 420, 416 420, 446 442" class="route" />
+
+  <text x="104" y="540" class="small">bottom level</text>
+  <path d="M 205 548 L 300 520 L 390 552 L 480 520 L 565 555 M 205 548 L 300 592 L 390 552 L 480 598 L 565 555 M 300 520 L 480 520 M 300 592 L 480 598" class="graph" />
+  <circle cx="205" cy="548" r="17" fill="#e2e8f0" stroke="#64748b" stroke-width="2" />
+  <circle cx="300" cy="520" r="17" fill="#dbeafe" stroke="#2563eb" stroke-width="3" />
+  <circle cx="300" cy="592" r="17" fill="#e2e8f0" stroke="#64748b" stroke-width="2" />
+  <circle cx="390" cy="552" r="17" fill="#bfdbfe" stroke="#2563eb" stroke-width="3" />
+  <circle cx="480" cy="520" r="17" fill="#dbeafe" stroke="#2563eb" stroke-width="3" />
+  <circle cx="480" cy="598" r="17" fill="#e2e8f0" stroke="#64748b" stroke-width="2" />
+  <circle cx="565" cy="555" r="17" fill="#bfdbfe" stroke="#2563eb" stroke-width="3" />
+  <text x="88" y="645" class="mono">result heap ≤ ef · candidate heap expands promising nodes</text>
+
+  <rect x="780" y="334" width="600" height="340" rx="18" fill="#f8fafc" stroke="#7c3aed" stroke-width="2" />
+  <text x="808" y="373" class="heading" fill="#6d28d9">2 · Search HNSW in partition P3</text>
+  <text x="808" y="403" class="body">same graph algorithm, independent metadata and storage slice</text>
+
+  <text x="824" y="458" class="small">upper level</text>
+  <path d="M 930 452 L 1050 452 L 1180 452" class="graph" />
+  <circle cx="930" cy="452" r="18" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
+  <circle cx="1050" cy="452" r="18" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
+  <circle cx="1180" cy="452" r="18" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" />
+  <text x="930" y="457" text-anchor="middle" class="small">0</text>
+  <text x="1050" y="457" text-anchor="middle" class="small">5</text>
+  <text x="1180" y="457" text-anchor="middle" class="small">8</text>
+  <path d="M 948 442 C 980 420, 1014 420, 1036 442" class="route" />
+  <path d="M 1068 442 C 1100 420, 1136 420, 1166 442" class="route" />
+
+  <text x="824" y="540" class="small">bottom level</text>
+  <path d="M 925 548 L 1020 520 L 1110 552 L 1200 520 L 1285 555 M 925 548 L 1020 592 L 1110 552 L 1200 598 L 1285 555 M 1020 520 L 1200 520 M 1020 592 L 1200 598" class="graph" />
+  <circle cx="925" cy="548" r="17" fill="#e2e8f0" stroke="#64748b" stroke-width="2" />
+  <circle cx="1020" cy="520" r="17" fill="#ede9fe" stroke="#7c3aed" stroke-width="3" />
+  <circle cx="1020" cy="592" r="17" fill="#e2e8f0" stroke="#64748b" stroke-width="2" />
+  <circle cx="1110" cy="552" r="17" fill="#ddd6fe" stroke="#7c3aed" stroke-width="3" />
+  <circle cx="1200" cy="520" r="17" fill="#ede9fe" stroke="#7c3aed" stroke-width="3" />
+  <circle cx="1200" cy="598" r="17" fill="#e2e8f0" stroke="#64748b" stroke-width="2" />
+  <circle cx="1285" cy="555" r="17" fill="#ddd6fe" stroke="#7c3aed" stroke-width="3" />
+  <text x="808" y="645" class="mono">distance comes from FLAT, PQ, or SQ storage</text>
+
+  <path d="M 360 674 L 360 718 L 720 718 L 720 746" class="arrow" />
+  <path d="M 1080 674 L 1080 718 L 720 718" class="arrow" />
+  <rect x="255" y="748" width="930" height="124" rx="18" fill="#0f172a" />
+  <text x="720" y="789" text-anchor="middle" class="heading inverse">3 · Merge candidates across selected partitions</text>
+  <text x="720" y="823" text-anchor="middle" class="body inverse">sort approximate distances → optionally fetch original vectors → exact refine → final top k</text>
+  <text x="720" y="850" text-anchor="middle" class="mono inverse">a miss before this stage cannot be recovered by refine</text>
+</svg>
