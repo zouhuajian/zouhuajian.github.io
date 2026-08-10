@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="920" viewBox="0 0 1440 920" role="img" aria-labelledby="title desc">
+  <title id="title">Lance filtered vector query execution</title>
+  <desc id="desc">A prefilter feeds an ANN branch over indexed fragments while an exact filtered Flat KNN branch scans an appended unindexed fragment. Both branches are reranked into one global top-k. Fast search skips the fallback branch.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#2563eb"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#16a34a"/></marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#ea580c"/></marker>
+    <style>
+      .title{font:700 31px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .subtitle{font:400 18px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#475569}
+      .node-title{font:700 22px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .body{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .small{font:400 15px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .output{font:700 22px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+    </style>
+  </defs>
+  <rect width="1440" height="920" fill="#fff"/>
+  <text x="55" y="55" class="title">Filtered vector query: indexed ANN + unindexed Flat fallback</text>
+  <text x="55" y="92" class="subtitle">k=3 · cosine · minimum_nprobes=2 · maximum_nprobes=8 · refine_factor=4 · ef=64</text>
+
+  <rect x="390" y="125" width="660" height="100" rx="14" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="720" y="164" text-anchor="middle" class="node-title" fill="#6d28d9">Prefilter: tenant_id = 42</text>
+  <text x="720" y="198" text-anchor="middle" class="body" fill="#5b21b6">Exact ScalarIndexQuery when coverage permits; otherwise filtered row-id scan</text>
+
+  <rect x="70" y="300" width="580" height="385" rx="16" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="360" y="343" text-anchor="middle" class="node-title" fill="#1d4ed8">Indexed branch · F0, F1</text>
+  <rect x="120" y="385" width="480" height="70" rx="12" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="360" y="414" text-anchor="middle" class="body" fill="#1e3a8a">ANNIvfPartition</text>
+  <text x="360" y="440" text-anchor="middle" class="small" fill="#1e40af">rank centroids · search 2..8 partitions</text>
+  <rect x="120" y="485" width="480" height="70" rx="12" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <text x="360" y="514" text-anchor="middle" class="body" fill="#1e3a8a">HNSW sub-index</text>
+  <text x="360" y="540" text-anchor="middle" class="small" fill="#1e40af">ef=64 · produce k × refine_factor = 12 candidates</text>
+  <rect x="120" y="585" width="480" height="70" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="360" y="614" text-anchor="middle" class="body" fill="#166534">Take raw vectors + exact rerank</text>
+  <text x="360" y="640" text-anchor="middle" class="small" fill="#15803d">candidate-set Top-3</text>
+
+  <rect x="790" y="300" width="580" height="385" rx="16" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="1080" y="343" text-anchor="middle" class="node-title" fill="#c2410c">Fallback branch · appended F2</text>
+  <rect x="840" y="405" width="480" height="80" rx="12" fill="#ffedd5" stroke="#f97316" stroke-width="2"/>
+  <text x="1080" y="438" text-anchor="middle" class="body" fill="#9a3412">Scan unindexed fragment</text>
+  <text x="1080" y="466" text-anchor="middle" class="small" fill="#c2410c">apply full tenant filter before ranking</text>
+  <rect x="840" y="535" width="480" height="80" rx="12" fill="#ffedd5" stroke="#f97316" stroke-width="2"/>
+  <text x="1080" y="568" text-anchor="middle" class="body" fill="#9a3412">Exact Flat KNN</text>
+  <text x="1080" y="596" text-anchor="middle" class="small" fill="#c2410c">unindexed-fragment Top-3</text>
+
+  <line x1="610" y1="225" x2="360" y2="290" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <line x1="830" y1="225" x2="1080" y2="290" stroke="#ea580c" stroke-width="3" marker-end="url(#arrow-orange)"/>
+  <line x1="360" y1="455" x2="360" y2="475" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <line x1="360" y1="555" x2="360" y2="575" stroke="#16a34a" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <line x1="1080" y1="485" x2="1080" y2="525" stroke="#ea580c" stroke-width="3" marker-end="url(#arrow-orange)"/>
+
+  <rect x="390" y="765" width="660" height="92" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="720" y="802" text-anchor="middle" class="output" fill="#166534">Union → exact distance → global Top-3</text>
+  <text x="720" y="834" text-anchor="middle" class="body" fill="#15803d">normal search covers indexed and current unindexed fragments</text>
+  <line x1="360" y1="685" x2="565" y2="755" stroke="#16a34a" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <line x1="1080" y1="685" x2="875" y2="755" stroke="#16a34a" stroke-width="3" marker-end="url(#arrow-green)"/>
+
+  <rect x="1075" y="735" width="300" height="120" rx="12" fill="#fff1f2" stroke="#e11d48" stroke-width="2" stroke-dasharray="10 7"/>
+  <text x="1225" y="773" text-anchor="middle" class="node-title" fill="#be123c">fast_search</text>
+  <text x="1225" y="807" text-anchor="middle" class="small" fill="#9f1239">skips F2 fallback</text>
+  <text x="1225" y="832" text-anchor="middle" class="small" fill="#9f1239">indexed-subset Top-K only</text>
+</svg>
