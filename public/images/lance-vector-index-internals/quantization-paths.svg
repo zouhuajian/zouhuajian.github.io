@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">Lance vector quantization paths</title>
+  <desc id="desc">PQ, SQ, and RabitQ transform vectors into compact codes, estimate distances during ANN search, and optionally refine candidates with original vectors.</desc>
+  <defs>
+    <style>
+      .title { font: 700 34px Inter, ui-sans-serif, system-ui, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 17px Inter, ui-sans-serif, system-ui, sans-serif; fill: #475569; }
+      .heading { font: 700 21px Inter, ui-sans-serif, system-ui, sans-serif; }
+      .label { font: 650 17px Inter, ui-sans-serif, system-ui, sans-serif; fill: #0f172a; }
+      .body { font: 400 15px Inter, ui-sans-serif, system-ui, sans-serif; fill: #334155; }
+      .mono { font: 600 14px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #334155; }
+      .inverse { fill: #ffffff; }
+      .arrow { stroke: #94a3b8; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .dash { stroke-dasharray: 8 7; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <rect width="1440" height="900" fill="#ffffff" />
+  <text x="60" y="58" class="title">Quantization changes vector storage, not IVF routing</text>
+  <text x="60" y="91" class="subtitle">The same partition can expose PQ, SQ, or RabitQ codes through the VectorStore boundary</text>
+
+  <rect x="60" y="130" width="250" height="120" rx="16" fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+  <text x="84" y="167" class="label">Original vector</text>
+  <text x="84" y="198" class="mono">x = FixedSizeList&lt;f32&gt;</text>
+  <text x="84" y="225" class="body">kept in Dataset files</text>
+
+  <path d="M 310 190 L 382 190" class="arrow" />
+  <rect x="390" y="130" width="300" height="120" rx="16" fill="#eff6ff" stroke="#2563eb" stroke-width="2" />
+  <text x="416" y="167" class="heading" fill="#1d4ed8">IVF assignment</text>
+  <text x="416" y="198" class="body">partition_id + centroid c</text>
+  <text x="416" y="225" class="mono">choose encoder-specific transform</text>
+
+  <path d="M 690 190 L 762 190" class="arrow" />
+  <rect x="770" y="130" width="610" height="120" rx="16" fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+  <text x="798" y="167" class="label">Quantization boundary</text>
+  <text x="798" y="198" class="mono">build · quantize · metadata · Storage::distance</text>
+  <text x="798" y="225" class="body">auxiliary.idx stores _rowid and the selected code schema</text>
+
+  <path d="M 540 250 L 540 310 L 250 310 L 250 348" class="arrow" />
+  <path d="M 540 310 L 720 310 L 720 348" class="arrow" />
+  <path d="M 720 310 L 1190 310 L 1190 348" class="arrow" />
+
+  <rect x="60" y="350" width="380" height="260" rx="18" fill="#eff6ff" stroke="#2563eb" stroke-width="2" />
+  <text x="86" y="389" class="heading" fill="#1d4ed8">PQ · subvector codebooks</text>
+  <text x="86" y="424" class="mono">L2/Cosine: r = x - c</text>
+  <text x="86" y="454" class="body">nearest codeword id per subvector</text>
+  <rect x="86" y="480" width="328" height="62" rx="11" fill="#dbeafe" />
+  <text x="106" y="507" class="mono">code = [3, 12, ...]</text>
+  <text x="106" y="531" class="mono">bytes = m * b / 8</text>
+  <text x="86" y="576" class="body">distance = sum(query lookup tables)</text>
+
+  <rect x="530" y="350" width="380" height="260" rx="18" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2" />
+  <text x="556" y="389" class="heading" fill="#6d28d9">SQ8 · scalar coordinates</text>
+  <text x="556" y="424" class="mono">quantize x directly · no residual</text>
+  <text x="556" y="454" class="body">each coordinate maps independently to u8</text>
+  <rect x="556" y="480" width="328" height="62" rx="11" fill="#ede9fe" />
+  <text x="576" y="507" class="mono">[-2,0,2,6] → [0,63,127,255]</text>
+  <text x="576" y="531" class="mono">bytes = dimension</text>
+  <text x="556" y="576" class="body">one shared bound range, not per-dimension bounds</text>
+
+  <rect x="1000" y="350" width="380" height="260" rx="18" fill="#ecfdf5" stroke="#059669" stroke-width="2" />
+  <text x="1026" y="389" class="heading" fill="#047857">RabitQ · rotated sign codes</text>
+  <text x="1026" y="424" class="mono">rotate(residual) → sign bits</text>
+  <text x="1026" y="454" class="body">optional extra bits preserve more magnitude</text>
+  <rect x="1026" y="480" width="328" height="62" rx="11" fill="#d1fae5" />
+  <text x="1046" y="507" class="mono">code = 0b00110101</text>
+  <text x="1046" y="531" class="mono">base bytes = ceil(d / 8)</text>
+  <text x="1026" y="576" class="body">add / scale / error factors correct distance</text>
+
+  <path d="M 250 610 L 250 682 L 720 682" class="arrow" />
+  <path d="M 720 610 L 720 682" class="arrow" />
+  <path d="M 1190 610 L 1190 682 L 720 682" class="arrow" />
+
+  <rect x="390" y="684" width="660" height="88" rx="16" fill="#fff7ed" stroke="#ea580c" stroke-width="2" />
+  <text x="416" y="720" class="heading" fill="#c2410c">ANN candidate ranking</text>
+  <text x="416" y="750" class="body">FLAT or HNSW compares compact codes through the selected distance calculator</text>
+
+  <path d="M 720 772 L 720 812" class="arrow dash" />
+  <rect x="260" y="814" width="920" height="60" rx="14" fill="#0f172a" />
+  <text x="720" y="851" text-anchor="middle" class="label inverse">refine_factor: fetch k × R original vectors → exact distance → final top k</text>
+</svg>

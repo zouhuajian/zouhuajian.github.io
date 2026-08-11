@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="930" viewBox="0 0 1440 930" role="img" aria-labelledby="title desc">
+  <title id="title">IVF build, Vector Index V3 storage, and query routing</title>
+  <desc id="desc">The build path samples vectors, trains centroids, assigns each vector to one partition, and writes index.idx plus auxiliary.idx. The query path ranks centroids, searches a bounded number of partitions, and merges their candidates into global top-k.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#2563eb"/></marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#ea580c"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0v6l9-3z" fill="#059669"/></marker>
+    <style>
+      .title{font:700 31px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .subtitle{font:400 17px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#475569}
+      .section{font:700 23px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#0f172a}
+      .card-title{font:700 20px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .body{font:400 16px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+      .mono{font:400 15px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"PingFang SC",monospace}
+      .chip{font:600 15px ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+    </style>
+  </defs>
+  <rect width="1440" height="930" fill="#fff"/>
+  <text x="55" y="55" class="title">IVF V3: build once, route every query</text>
+  <text x="55" y="92" class="subtitle">构建产生 centroids 与互斥 partitions；查询先做 centroid ranking，再搜索受 probes 约束的局部数据</text>
+
+  <text x="55" y="142" class="section">Build path</text>
+  <rect x="55" y="170" width="210" height="185" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="82" y="212" class="card-title" fill="#1d4ed8">Dataset vectors</text>
+  <text x="82" y="252" class="mono" fill="#1e3a8a">
+    <tspan x="82" dy="0">FixedSizeList&lt;f32,D&gt;</tspan>
+    <tspan x="82" dy="29">N visible vectors</tspan>
+    <tspan x="82" dy="29">+ _rowid</tspan>
+  </text>
+
+  <rect x="325" y="170" width="235" height="185" rx="14" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="352" y="212" class="card-title" fill="#c2410c">Sample + K-Means</text>
+  <text x="352" y="252" class="mono" fill="#9a3412">
+    <tspan x="352" dy="0">k = num_partitions</tspan>
+    <tspan x="352" dy="29">sample ≤ k × rate</tspan>
+    <tspan x="352" dy="29">centroids c0..c(k-1)</tspan>
+  </text>
+
+  <rect x="620" y="170" width="245" height="185" rx="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+  <text x="647" y="212" class="card-title" fill="#15803d">Assign + shuffle</text>
+  <text x="647" y="252" class="mono" fill="#166534">
+    <tspan x="647" dy="0">vector → nearest centroid</tspan>
+    <tspan x="647" dy="29">one __ivf_part_id</tspan>
+    <tspan x="647" dy="29">P0 | P1 | ... | P(k-1)</tspan>
+  </text>
+
+  <line x1="265" y1="263" x2="315" y2="263" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <line x1="560" y1="263" x2="610" y2="263" stroke="#ea580c" stroke-width="3" marker-end="url(#arrow-orange)"/>
+  <path d="M442 355V390H247V440" fill="none" stroke="#ea580c" stroke-width="3" marker-end="url(#arrow-orange)"/>
+
+  <text x="55" y="420" class="section">Vector Index V3 segment</text>
+  <rect x="55" y="450" width="385" height="285" rx="14" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+  <text x="82" y="493" class="card-title" fill="#6d28d9">index.idx</text>
+  <text x="82" y="532" class="body" fill="#5b21b6">
+    <tspan x="82" dy="0">Sub-index structure</tspan>
+    <tspan x="102" dy="28">FLAT marker / HNSW graph</tspan>
+    <tspan x="82" dy="40">IVF global buffer</tspan>
+    <tspan x="102" dy="28">centroids tensor</tspan>
+    <tspan x="102" dy="28">partition offsets + lengths</tspan>
+    <tspan x="102" dy="28">optional K-Means loss</tspan>
+  </text>
+
+  <rect x="480" y="450" width="385" height="285" rx="14" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <text x="507" y="493" class="card-title" fill="#047857">auxiliary.idx</text>
+  <text x="507" y="532" class="body" fill="#065f46">
+    <tspan x="507" dy="0">Rows ordered by partition</tspan>
+    <tspan x="527" dy="28">_rowid + vector storage</tspan>
+    <tspan x="527" dy="28">FLAT / PQ / SQ / RQ codes</tspan>
+    <tspan x="507" dy="40">Storage global buffer</tspan>
+    <tspan x="527" dy="28">PQ codebook / RQ rotation</tspan>
+    <tspan x="507" dy="40">P0 | P1 | ... | P(k-1)</tspan>
+  </text>
+  <line x1="742" y1="355" x2="742" y2="440" stroke="#059669" stroke-width="3" marker-end="url(#arrow-green)"/>
+
+  <line x1="925" y1="135" x2="925" y2="815" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8 8"/>
+  <text x="975" y="142" class="section">Query path</text>
+
+  <rect x="975" y="170" width="175" height="120" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="1002" y="211" class="card-title" fill="#1d4ed8">Query q</text>
+  <text x="1002" y="251" class="mono" fill="#1e3a8a">[2.49, 0.0]</text>
+
+  <rect x="1210" y="170" width="175" height="120" rx="14" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="1237" y="211" class="card-title" fill="#c2410c">Rank centroids</text>
+  <text x="1237" y="251" class="mono" fill="#9a3412">P0 &lt; P1 &lt; P2</text>
+  <line x1="1150" y1="230" x2="1200" y2="230" stroke="#ea580c" stroke-width="3" marker-end="url(#arrow-orange)"/>
+
+  <rect x="975" y="350" width="410" height="165" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="1002" y="392" class="card-title" fill="#334155">Probe control</text>
+  <text x="1002" y="432" class="mono" fill="#475569">
+    <tspan x="1002" dy="0">initial: search minimum_nprobes</tspan>
+    <tspan x="1002" dy="30">late: continue if candidates &lt; k</tspan>
+    <tspan x="1002" dy="30">stop at k candidates or maximum_nprobes</tspan>
+  </text>
+  <line x1="1298" y1="290" x2="1298" y2="340" stroke="#ea580c" stroke-width="3" marker-end="url(#arrow-orange)"/>
+
+  <rect x="975" y="575" width="195" height="160" rx="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+  <text x="1002" y="617" class="card-title" fill="#15803d">Search P0</text>
+  <text x="1002" y="657" class="mono" fill="#166534">
+    <tspan x="1002" dy="0">sub-index</tspan>
+    <tspan x="1002" dy="28">+ vector storage</tspan>
+  </text>
+  <rect x="1190" y="575" width="195" height="160" rx="14" fill="#f0fdf4" stroke="#16a34a" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="1217" y="617" class="card-title" fill="#15803d">Maybe search P1</text>
+  <text x="1217" y="657" class="mono" fill="#166534">
+    <tspan x="1217" dy="0">only within</tspan>
+    <tspan x="1217" dy="28">probe bounds</tspan>
+  </text>
+  <line x1="1180" y1="515" x2="1070" y2="565" stroke="#059669" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <line x1="1180" y1="515" x2="1287" y2="565" stroke="#059669" stroke-width="3" stroke-dasharray="7 6" marker-end="url(#arrow-green)"/>
+
+  <rect x="975" y="795" width="410" height="80" rx="14" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <text x="1002" y="835" class="card-title" fill="#047857">Merge candidates → global Top-K by distance</text>
+  <line x1="1070" y1="735" x2="1135" y2="785" stroke="#059669" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <line x1="1287" y1="735" x2="1225" y2="785" stroke="#059669" stroke-width="3" marker-end="url(#arrow-green)"/>
+
+  <rect x="55" y="795" width="810" height="80" rx="14" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="82" y="829" class="chip" fill="#9a3412">Recall boundary</text>
+  <text x="222" y="829" class="body" fill="#9a3412">未搜索 partition 仍可能包含更近向量；拿到 k 个候选不是全局精确性证明</text>
+</svg>
