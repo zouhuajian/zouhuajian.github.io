@@ -1,16 +1,17 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
   width="1000"
-  height="1270"
-  viewBox="0 0 1000 1270"
+  height="1190"
+  viewBox="0 0 1000 1190"
   role="img"
   aria-labelledby="title desc"
 >
-  <title id="title">一次重构：主体归属与执行边界</title>
+  <title id="title">三阶段调度：锁边界与最终验证</title>
   <desc id="desc">
-    蓝色表示主体与容器，紫色表示处理流程。NameNode 保存 block
-    存储关联、needed、节点命令队列与 pending；DataNode 通过 heartbeat response
-    领取命令，传输数据后通过 IBR/FBR 报告。pending 条目数不等于 target 数。
+    阶段一在 FSNamesystem write lock 内读取 block 状态并构造
+    work；阶段二在全局锁外选择
+    targets；阶段三重新加锁验证，只有通过时才排入节点任务队列、更新 pending
+    并增加本轮 scheduledWork。
   </desc>
   <defs>
     <marker
@@ -24,7 +25,7 @@
       <path d="M0,0 L9,4.5 L0,9 Z" fill="#475569" />
     </marker>
   </defs>
-  <rect width="1000" height="1270" fill="white" />
+  <rect width="1000" height="1190" fill="white" />
   <g font-family="Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif">
     <text
       x="40"
@@ -34,7 +35,7 @@
       text-anchor="start"
       fill="#172033"
     >
-      <tspan x="40" dy="0">一次重构：主体归属与执行边界</tspan>
+      <tspan x="40" dy="0">三阶段调度：锁边界与最终验证</tspan>
     </text>
     <rect
       x="40"
@@ -160,7 +161,7 @@
       x="40"
       y="155"
       width="920"
-      height="690"
+      height="225"
       rx="14"
       fill="#ffffff"
       stroke="#94a3b8"
@@ -174,52 +175,53 @@
       text-anchor="start"
       fill="#475569"
     >
-      <tspan x="60" dy="0">NameNode · BlockManager 与 DatanodeDescriptor</tspan>
+      <tspan x="60" dy="0">阶段 1 · 持有 FSNamesystem write lock</tspan>
     </text>
     <rect
       x="80"
-      y="220"
-      width="340"
-      height="100"
+      y="245"
+      width="320"
+      height="90"
       rx="10"
       fill="#eff6ff"
       stroke="#2563eb"
       stroke-width="2"
     />
     <text
-      x="250.0"
-      y="261.2"
+      x="240.0"
+      y="281.2"
       font-size="22"
       font-weight="400"
       text-anchor="middle"
       fill="#172033"
     >
-      <tspan x="250.0" dy="0">BlocksMap</tspan>
-      <tspan x="250.0" dy="30.799999999999997">BlockInfo → 存储关联</tspan>
+      <tspan x="240.0" dy="0">BlocksMap</tspan>
+      <tspan x="240.0" dy="30.799999999999997">neededReconstruction</tspan>
     </text>
     <rect
-      x="540"
-      y="220"
-      width="380"
-      height="100"
+      x="490"
+      y="225"
+      width="430"
+      height="130"
       rx="10"
       fill="#f5f3ff"
       stroke="#7c3aed"
       stroke-width="2"
     />
     <text
-      x="730.0"
-      y="261.2"
+      x="705.0"
+      y="265.8"
       font-size="22"
       font-weight="400"
       text-anchor="middle"
       fill="#172033"
     >
-      <tspan x="730.0" dy="0">更新关联 / 统计副本</tspan>
-      <tspan x="730.0" dy="30.799999999999997">countNodes()</tspan>
+      <tspan x="705.0" dy="0">scheduleReconstruction()</tspan>
+      <tspan x="705.0" dy="30.799999999999997">统计副本、选择 sources</tspan>
+      <tspan x="705.0" dy="30.799999999999997">构造 work</tspan>
     </text>
     <polyline
-      points="420,270 540,270"
+      points="400,288 490,288"
       fill="none"
       stroke="#475569"
       stroke-width="2"
@@ -227,201 +229,20 @@
       marker-end="url(#arrow)"
     />
     <text
-      x="480.0"
-      y="252"
+      x="445.0"
+      y="268"
       font-size="18"
       font-weight="400"
       text-anchor="middle"
       fill="#475569"
     >
-      <tspan x="480.0" dy="0">读取</tspan>
-    </text>
-    <rect
-      x="80"
-      y="400"
-      width="340"
-      height="100"
-      rx="10"
-      fill="#eff6ff"
-      stroke="#2563eb"
-      stroke-width="2"
-    />
-    <text
-      x="250.0"
-      y="441.2"
-      font-size="22"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#172033"
-    >
-      <tspan x="250.0" dy="0">neededReconstruction</tspan>
-      <tspan x="250.0" dy="30.799999999999997">元素：BlockInfo</tspan>
-    </text>
-    <rect
-      x="540"
-      y="400"
-      width="380"
-      height="100"
-      rx="10"
-      fill="#f5f3ff"
-      stroke="#7c3aed"
-      stroke-width="2"
-    />
-    <text
-      x="730.0"
-      y="441.2"
-      font-size="22"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#172033"
-    >
-      <tspan x="730.0" dy="0">RedundancyMonitor</tspan>
-      <tspan x="730.0" dy="30.799999999999997">选择 source / targets</tspan>
-    </text>
-    <polyline
-      points="730,320 730,355 250,355 250,400"
-      fill="none"
-      stroke="#475569"
-      stroke-width="2"
-      stroke-linejoin="round"
-      marker-end="url(#arrow)"
-    />
-    <text
-      x="440.0"
-      y="343"
-      font-size="18"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#475569"
-    >
-      <tspan x="440.0" dy="0">评估后加入 / 移除</tspan>
-    </text>
-    <polyline
-      points="420,450 540,450"
-      fill="none"
-      stroke="#475569"
-      stroke-width="2"
-      stroke-linejoin="round"
-      marker-end="url(#arrow)"
-    />
-    <text
-      x="480.0"
-      y="434"
-      font-size="18"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#475569"
-    >
-      <tspan x="480.0" dy="0">选取</tspan>
-    </text>
-    <text
-      x="250.0"
-      y="530"
-      font-size="18"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#475569"
-    >
-      <tspan x="250.0" dy="0">LowRedundancyBlocks</tspan>
-      <tspan x="250.0" dy="25.2">集合条目数快照</tspan>
-    </text>
-    <rect
-      x="80"
-      y="620"
-      width="400"
-      height="105"
-      rx="10"
-      fill="#eff6ff"
-      stroke="#2563eb"
-      stroke-width="2"
-    />
-    <text
-      x="280.0"
-      y="663.7"
-      font-size="22"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#172033"
-    >
-      <tspan x="280.0" dy="0">DatanodeDescriptor</tspan>
-      <tspan x="280.0" dy="30.799999999999997">复制 / EC 命令队列</tspan>
-    </text>
-    <rect
-      x="540"
-      y="620"
-      width="380"
-      height="105"
-      rx="10"
-      fill="#eff6ff"
-      stroke="#2563eb"
-      stroke-width="2"
-    />
-    <text
-      x="730.0"
-      y="663.7"
-      font-size="22"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#172033"
-    >
-      <tspan x="730.0" dy="0">pendingReconstruction</tspan>
-      <tspan x="730.0" dy="30.799999999999997">
-        BlockInfo → targets + 时间
-      </tspan>
-    </text>
-    <polyline
-      points="730,500 730,578 280,578 280,620"
-      fill="none"
-      stroke="#475569"
-      stroke-width="2"
-      stroke-linejoin="round"
-      marker-end="url(#arrow)"
-    />
-    <text
-      x="555.0"
-      y="563"
-      font-size="18"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#475569"
-    >
-      <tspan x="555.0" dy="0">验证通过：排入命令并记录尝试</tspan>
-    </text>
-    <polyline
-      points="730,578 730,620"
-      fill="none"
-      stroke="#475569"
-      stroke-width="2"
-      stroke-linejoin="round"
-      marker-end="url(#arrow)"
-    />
-    <text
-      x="280.0"
-      y="768"
-      font-size="18"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#475569"
-    >
-      <tspan x="280.0" dy="0">ScheduledReplicationBlocks</tspan>
-      <tspan x="280.0" dy="25.2">最近一轮安排的 work 数</tspan>
-    </text>
-    <text
-      x="730.0"
-      y="768"
-      font-size="18"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#475569"
-    >
-      <tspan x="730.0" dy="0">PendingReconstructionBlocks</tspan>
-      <tspan x="730.0" dy="25.2">map 的 key 数，不是 target 数</tspan>
+      <tspan x="445.0" dy="0">读取</tspan>
     </text>
     <rect
       x="40"
-      y="945"
+      y="450"
       width="920"
-      height="230"
+      height="210"
       rx="14"
       fill="#ffffff"
       stroke="#94a3b8"
@@ -429,39 +250,116 @@
     />
     <text
       x="60"
-      y="980"
+      y="485"
       font-size="23"
       font-weight="600"
       text-anchor="start"
       fill="#475569"
     >
-      <tspan x="60" dy="0">DataNode · 按任务分支执行数据传输</tspan>
+      <tspan x="60" dy="0">阶段 2 · 不持有 FSNamesystem 全局锁</tspan>
     </text>
     <rect
       x="80"
-      y="1030"
-      width="240"
-      height="95"
+      y="525"
+      width="320"
+      height="90"
       rx="10"
       fill="#eff6ff"
       stroke="#2563eb"
       stroke-width="2"
     />
     <text
-      x="200.0"
-      y="1068.7"
-      font-size="22"
+      x="240.0"
+      y="561.6"
+      font-size="21"
       font-weight="400"
       text-anchor="middle"
       fill="#172033"
     >
-      <tspan x="200.0" dy="0">Source</tspan>
-      <tspan x="200.0" dy="30.799999999999997">DataNode</tspan>
+      <tspan x="240.0" dy="0">BlockReconstructionWork</tspan>
+      <tspan x="240.0" dy="29.4">block + sources</tspan>
     </text>
     <rect
-      x="390"
-      y="1030"
-      width="240"
+      x="490"
+      y="515"
+      width="430"
+      height="110"
+      rx="10"
+      fill="#f5f3ff"
+      stroke="#7c3aed"
+      stroke-width="2"
+    />
+    <text
+      x="705.0"
+      y="562.0"
+      font-size="20"
+      font-weight="400"
+      text-anchor="middle"
+      fill="#172033"
+    >
+      <tspan x="705.0" dy="0">chooseTargets()</tspan>
+      <tspan x="705.0" dy="28.0">placement / 排除已有及 pending 节点</tspan>
+    </text>
+    <polyline
+      points="705,355 705,515"
+      fill="none"
+      stroke="#475569"
+      stroke-width="2"
+      stroke-linejoin="round"
+      marker-end="url(#arrow)"
+    />
+    <text
+      x="835.0"
+      y="420"
+      font-size="18"
+      font-weight="400"
+      text-anchor="middle"
+      fill="#475569"
+    >
+      <tspan x="835.0" dy="0">构造临时 work</tspan>
+    </text>
+    <polyline
+      points="400,570 490,570"
+      fill="none"
+      stroke="#475569"
+      stroke-width="2"
+      stroke-linejoin="round"
+      marker-end="url(#arrow)"
+    />
+    <text
+      x="445.0"
+      y="554"
+      font-size="18"
+      font-weight="400"
+      text-anchor="middle"
+      fill="#475569"
+    >
+      <tspan x="445.0" dy="0">处理</tspan>
+    </text>
+    <rect
+      x="40"
+      y="730"
+      width="920"
+      height="390"
+      rx="14"
+      fill="#ffffff"
+      stroke="#94a3b8"
+      stroke-width="2"
+    />
+    <text
+      x="60"
+      y="765"
+      font-size="23"
+      font-weight="600"
+      text-anchor="start"
+      fill="#475569"
+    >
+      <tspan x="60" dy="0">阶段 3 · 重新获取 FSNamesystem write lock</tspan>
+    </text>
+    <rect
+      x="80"
+      y="805"
+      width="840"
       height="95"
       rx="10"
       fill="#f5f3ff"
@@ -469,95 +367,141 @@
       stroke-width="2"
     />
     <text
-      x="510.0"
-      y="1068.7"
+      x="500.0"
+      y="843.7"
       font-size="22"
       font-weight="400"
       text-anchor="middle"
       fill="#172033"
     >
-      <tspan x="510.0" dy="0">复制 / EC 解码</tspan>
-      <tspan x="510.0" dy="30.799999999999997">读取并写入</tspan>
+      <tspan x="500.0" dy="0">validateReconstructionWork()</tspan>
+      <tspan x="500.0" dy="30.799999999999997">
+        重查 block、live + pending 与 placement
+      </tspan>
+    </text>
+    <polyline
+      points="705,625 705,805"
+      fill="none"
+      stroke="#475569"
+      stroke-width="2"
+      stroke-linejoin="round"
+      marker-end="url(#arrow)"
+    />
+    <text
+      x="367.5"
+      y="700"
+      font-size="18"
+      font-weight="400"
+      text-anchor="middle"
+      fill="#475569"
+    >
+      <tspan x="367.5" dy="0">携带 targets；期间存储事实可能变化</tspan>
     </text>
     <rect
-      x="700"
-      y="1030"
-      width="220"
-      height="95"
+      x="80"
+      y="957"
+      width="310"
+      height="58"
+      rx="10"
+      fill="#fef2f2"
+      stroke="#b91c1c"
+      stroke-width="2"
+    />
+    <text
+      x="235.0"
+      y="992.0"
+      font-size="20"
+      font-weight="400"
+      text-anchor="middle"
+      fill="#172033"
+    >
+      <tspan x="235.0" dy="0">验证失败 / 无有效 targets</tspan>
+    </text>
+    <rect
+      x="530"
+      y="957"
+      width="390"
+      height="58"
+      rx="10"
+      fill="#ecfdf5"
+      stroke="#15803d"
+      stroke-width="2"
+    />
+    <text
+      x="725.0"
+      y="992.3"
+      font-size="21"
+      font-weight="400"
+      text-anchor="middle"
+      fill="#172033"
+    >
+      <tspan x="725.0" dy="0">验证通过</tspan>
+    </text>
+    <polyline
+      points="230,900 230,957"
+      fill="none"
+      stroke="#475569"
+      stroke-width="2"
+      stroke-linejoin="round"
+      marker-end="url(#arrow)"
+    />
+    <polyline
+      points="725,900 725,957"
+      fill="none"
+      stroke="#475569"
+      stroke-width="2"
+      stroke-linejoin="round"
+      marker-end="url(#arrow)"
+    />
+    <text
+      x="235.0"
+      y="1057"
+      font-size="20"
+      font-weight="400"
+      text-anchor="middle"
+      fill="#475569"
+    >
+      <tspan x="235.0" dy="0">放弃本次安排</tspan>
+      <tspan x="235.0" dy="28.0">按当前需求维护 needed</tspan>
+    </text>
+    <rect
+      x="530"
+      y="1040"
+      width="390"
+      height="60"
       rx="10"
       fill="#eff6ff"
       stroke="#2563eb"
       stroke-width="2"
     />
     <text
-      x="810.0"
-      y="1068.7"
-      font-size="22"
+      x="725.0"
+      y="1076.3"
+      font-size="21"
       font-weight="400"
       text-anchor="middle"
       fill="#172033"
     >
-      <tspan x="810.0" dy="0">Target(s)</tspan>
-      <tspan x="810.0" dy="30.799999999999997">DataNode</tspan>
+      <tspan x="725.0" dy="0">节点任务队列 + pending</tspan>
     </text>
     <polyline
-      points="320,1078 390,1078"
+      points="725,1015 725,1040"
       fill="none"
       stroke="#475569"
       stroke-width="2"
       stroke-linejoin="round"
-      marker-end="url(#arrow)"
-    />
-    <polyline
-      points="630,1078 700,1078"
-      fill="none"
-      stroke="#475569"
-      stroke-width="2"
-      stroke-linejoin="round"
-      marker-end="url(#arrow)"
-    />
-    <polyline
-      points="80,672 60,672 60,925 510,925 510,1030"
-      fill="none"
-      stroke="#475569"
-      stroke-width="2"
-      stroke-linejoin="round"
-      marker-end="url(#arrow)"
-    />
-    <text
-      x="635.0"
-      y="907"
-      font-size="18"
-      font-weight="400"
-      text-anchor="middle"
-      fill="#475569"
-    >
-      <tspan x="635.0" dy="0">
-        heartbeat response：向 source 或 EC coordinator 返回命令
-      </tspan>
-    </text>
-    <polyline
-      points="920,1078 980,1078 980,270 920,270"
-      fill="none"
-      stroke="#475569"
-      stroke-width="2"
-      stroke-linejoin="round"
-      stroke-dasharray="7 5"
       marker-end="url(#arrow)"
     />
     <text
       x="500.0"
-      y="1217"
+      y="1160"
       font-size="20"
       font-weight="400"
       text-anchor="middle"
       fill="#475569"
     >
       <tspan x="500.0" dy="0">
-        虚线：IBR / FBR 返回 NameNode，更新存储事实
-      </tspan>
-      <tspan x="500.0" dy="28.0">
-        IBR 另移除匹配的 pending target；EC coordinator 位于第一个 target
+        通过的 work 才计入本轮 ScheduledReplicationBlocks；此时尚未确认新副本
       </tspan>
     </text>
   </g>
