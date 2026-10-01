@@ -11,7 +11,7 @@ tags:
 description: "从冗余状态判定、优先级调度到 DataNode 副本复制与 EC 重构"
 ---
 
-> 本文源码基于 Apache Hadoop 3.4.1 的 [`rel/release-3.4.1`](https://github.com/apache/hadoop/tree/rel/release-3.4.1)。代码片段是突出主路径的简化伪代码；省略的分支不构成完整实现。
+> 本文源码基于 Apache Hadoop 3.4.1
 >
 > 本文分析已完成写入的 block 如何恢复冗余。写入期间的 pipeline recovery、lease recovery 和 `BlockRecoveryWorker` 不在本文范围内。
 
@@ -27,7 +27,7 @@ HDFS 的 block reconstruction 是一个持续收敛的过程：NameNode 根据�
 
 1. `BlockManager` 重新统计 B，将它加入 `neededReconstruction` 的最高优先级集合。
 2. `RedundancyMonitor` 选择 B，以 DN1 为 source，为它寻找 DN4、DN5 两个 targets。
-3. 最终验证通过后，在 **NameNode 内存中的 DN1 描述对象**里排入复制任务，同时记录 `pending[B] = {DN4, DN5}`。若 live + pending 已满足要求，B 可在此时离开 needed。
+3. 最终验证通过后，在 **NameNode 内存中的 DN1 描述对象**里排入复制任务，同时记录 `pending[B] = {DN4, DN5}`。若 live + pending 已满足要求，B 会从 `neededReconstruction` 中移除。
 4. DN1 发来 heartbeat，NameNode 在响应中返回 `DNA_TRANSFER`；DN1 随后通过数据传输 pipeline 将 B 复制到 targets。
 5. targets 上报 `RECEIVED_BLOCK`，NameNode 接受新副本并移除对应 pending target；所有 targets 都得到确认后，B 的 pending 条目消失。
 
@@ -50,7 +50,7 @@ HDFS 的 block reconstruction 是一个持续收敛的过程：NameNode 根据�
 
 `BlocksMap` 维护 NameNode 已知的 block 元数据及存储关联，block reports 持续校正这个视图。`NumberReplicas` 是从这些关联和节点状态计算的结果。图中的主体框使用蓝色、处理步骤使用紫色；状态独立用绿色（满足）、橙色（等待）和红色（失败）标签表示。灰色用于归属边界和指标注释，同一主体不会随状态改变底色。
 
-![重构主体、NameNode 调度记录与 DataNode 执行的关系；蓝色为主体，紫色为流程，灰色为指标和归属](/images/hdfs-block-reconstruction/reconstruction-architecture.svg)
+![重构主体、NameNode 调度记录与 DataNode 执行的关系；蓝色为主体，紫色为流程，灰色为指标和归属](../../assets/images/hdfs-block-reconstruction/reconstruction-architecture.svg)
 
 图中的任务队列与 pending 都在 NameNode 内存中。箭头上的“加入”“取出”“报告”表示操作；框内的 key、value 和元素类型表示包含关系。heartbeat response 携带命令，DataNode 之间传输 block 数据，两者是不同的交互。
 
@@ -270,7 +270,7 @@ nodesToInvalidate = ceil(liveDatanodes
 
 ### 3.2 三阶段调度与锁边界
 
-![三阶段调度：锁内读取主体并构造 work，锁外选择 targets，重新加锁验证并记录任务与 pending](/images/hdfs-block-reconstruction/reconstruction-scheduling.svg)
+![三阶段调度：锁内读取主体并构造 work，锁外选择 targets，重新加锁验证并记录任务与 pending](../../assets/images/hdfs-block-reconstruction/reconstruction-scheduling.svg)
 
 `computeReconstructionWorkForBlocks()` 是整条 NameNode 调度链的核心。它有意拆成三个阶段：
 
@@ -491,7 +491,7 @@ target EC Worker
 
 ## 5. 完成确认、超时与状态收敛
 
-![报告和超时触发重新评估；需要重构、安全删除和暂缓判断是不同分支，集合并非互斥状态](/images/hdfs-block-reconstruction/reconstruction-state-machine.svg)
+![报告和超时触发重新评估；需要重构、安全删除和暂缓判断是不同分支，集合并非互斥状态](../../assets/images/hdfs-block-reconstruction/reconstruction-state-machine.svg)
 
 图中反馈统一回到“当前事实与冗余判断”。报告更新存储关联，timeout 只清理尝试记录；重扫与重新调度使用各自的源码入口，并不是所有事件都调用同一个分类方法。
 
