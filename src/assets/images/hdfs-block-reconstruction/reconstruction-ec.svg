@@ -1,0 +1,219 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="480"
+  height="740"
+  viewBox="0 0 480 740"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">03b EC 解码的数据方向</title>
+  <desc id="desc">
+    sources 的数据由独立读线程并行读取，第一个 target 上的 coordinator
+    执行解码，并分别写入目标 storages，targets 再报告给 NameNode。
+  </desc>
+  <defs>
+    <marker
+      id="head"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path
+        d="M 0 1 L 9 5 L 0 9"
+        fill="none"
+        stroke="#334155"
+        stroke-width="1.5"
+      />
+    </marker>
+  </defs>
+  <rect width="480" height="740" fill="white" />
+  <text
+    x="24"
+    y="44"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="24"
+    font-weight="600"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">03b EC 解码的数据方向</tspan>
+  </text>
+  <text
+    x="24"
+    y="79"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">EC 命令由第一个 target 领取</tspan>
+  </text>
+  <rect
+    x="40"
+    y="111"
+    width="400"
+    height="80"
+    rx="5"
+    fill="#edf3ff"
+    stroke="#4168b0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="144.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">source DataNodes</tspan>
+    <tspan x="240.0" dy="28">不同 internal block indices</tspan>
+  </text>
+  <path
+    d="M 240 191 L 240 246"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="224.5"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">输入数据</tspan>
+  </text>
+  <rect
+    x="16"
+    y="246"
+    width="448"
+    height="260"
+    rx="5"
+    fill="#f6f7f9"
+    stroke="#a3adba"
+    stroke-width="1.5"
+  />
+  <text
+    x="30"
+    y="276"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="30" dy="0">第一个 target · coordinator DataNode</tspan>
+  </text>
+  <rect
+    x="40"
+    y="293"
+    width="400"
+    height="78"
+    rx="5"
+    fill="#edf3ff"
+    stroke="#4168b0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="325.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">stripedReadPool 并行读取</tspan>
+    <tspan x="240.0" dy="28">CompletionService 收集结果</tspan>
+  </text>
+  <path
+    d="M 240 371 L 240 417"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <rect
+    x="40"
+    y="417"
+    width="400"
+    height="70"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="445.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">重构任务线程</tspan>
+    <tspan x="240.0" dy="28">decoder → StripedWriter</tspan>
+  </text>
+  <path
+    d="M 240 506 L 240 567"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="542.5"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">输出数据</tspan>
+  </text>
+  <rect
+    x="40"
+    y="567"
+    width="400"
+    height="84"
+    rx="5"
+    fill="#edf3ff"
+    stroke="#4168b0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="602.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">分别写入目标 storages</tspan>
+    <tspan x="240.0" dy="28">包含 coordinator 所在 DataNode</tspan>
+  </text>
+  <text
+    x="24"
+    y="700"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">各 target 完成后</tspan>
+    <tspan x="24" dy="28">分别向 NameNode 发送 IBR</tspan>
+  </text>
+</svg>

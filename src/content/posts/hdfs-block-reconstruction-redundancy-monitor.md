@@ -11,591 +11,358 @@ tags:
 description: "从冗余状态判定、优先级调度到 DataNode 副本复制与 EC 重构"
 ---
 
-> 本文源码基于 Apache Hadoop 3.4.1
->
-> 本文分析已完成写入的 block 如何恢复冗余。写入期间的 pipeline recovery、lease recovery 和 `BlockRecoveryWorker` 不在本文范围内。
+> 源码版本：Apache Hadoop 3.4.1。本文讨论 block 写入完成后的冗余维护；写入期间的 pipeline recovery、lease recovery 和 `BlockRecoveryWorker` 不在此范围内。
 
-HDFS 的 block reconstruction 是一个持续收敛的过程：NameNode 根据当前 replica 事实识别需求、选择工作，DataNode 执行复制或 EC 解码，再通过 block report 反馈结果。阅读这条链路时，需要始终区分 **逻辑 block、实际 replica、调度记录和执行任务**；它们的数量并不相等。
+## 1. 重构流程与核心对象
 
-本文先用一个 block 串起全链路，再依次解释冗余判定、三阶段调度、DataNode 执行和失败收敛。每个核心容器旁边给出关联指标，最后提供指标与配置速查表。
+DataNode 故障、存储损坏、节点退出服务或副本数调整，都可能使 block 的现有冗余不再满足要求。NameNode 负责统计副本、选择重构任务和安排执行节点；DataNode 负责复制数据或恢复 EC internal blocks，并通过 block report 汇报结果。
 
-## 1. 一次重构涉及哪些主体
+![重构流程：NameNode 发现需求并登记任务，DataNode 通过 heartbeat 领取命令，执行后报告副本](../../assets/images/hdfs-block-reconstruction/reconstruction-architecture-spaced.svg)
 
-### 1.1 从 block B 丢失两份副本开始
+`BlocksMap` 保存 NameNode 已知的 block 元数据及其 storage 关联。普通 block 由 `BlockInfoContiguous` 表示，多份 replica 对应同一个逻辑 block；EC block group 由 `BlockInfoStriped` 表示，副本还要按 internal block index 区分。`NumberReplicas` 则是根据这些关联和节点状态计算出的分类统计。
 
-假设普通 block `B` 的 replication factor 为 3，原来位于 `DN1 / DN2 / DN3`；`DN2 / DN3` 故障并被 NameNode 处理后，只剩 `DN1` 上的一份 live replica。
+`BlockManager` 使用三个容器维护重构需求和待处理记录：
 
-1. `BlockManager` 重新统计 B，将它加入 `neededReconstruction` 的最高优先级集合。
-2. `RedundancyMonitor` 选择 B，以 DN1 为 source，为它寻找 DN4、DN5 两个 targets。
-3. 最终验证通过后，在 **NameNode 内存中的 DN1 描述对象**里排入复制任务，同时记录 `pending[B] = {DN4, DN5}`。若 live + pending 已满足要求，B 会从 `neededReconstruction` 中移除。
-4. DN1 发来 heartbeat，NameNode 在响应中返回 `DNA_TRANSFER`；DN1 随后通过数据传输 pipeline 将 B 复制到 targets。
-5. targets 上报 `RECEIVED_BLOCK`，NameNode 接受新副本并移除对应 pending target；所有 targets 都得到确认后，B 的 pending 条目消失。
+<div class="[&_code]:wrap-anywhere [&_table]:w-full [&_table]:table-fixed">
 
-这里有三种不同的“数量”：**1 个逻辑 block、2 个 pending targets、1 个本轮成功安排的 reconstruction work**。任务入队时并没有新增两份真实 replica；必须等 DataNode 执行并报告。
-
-### 1.2 逻辑数据、存储副本与临时工作
-
-<div class="overflow-x-auto [&_table]:min-w-[48rem]" role="region" aria-label="逻辑数据与核心类型（窄屏可横向滚动）" tabindex="0">
-
-| 主体 / 类型                                  | 表达什么                                                                           | 本文的计数单位                                                 |
-| -------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `BlockInfoContiguous`                        | NameNode 对普通 block 的元数据表示，关联文件及存储位置                             | 一个逻辑 block；多份 replica 仍对应同一个 block                |
-| `BlockInfoStriped`                           | NameNode 对 EC block group 的元数据表示，包含 EC policy 和 internal block 位置关系 | 一个 block group；不能把它当作一个 internal block              |
-| replica / internal block replica             | 某个 DataNode storage 上实际存储的数据；EC 还要区分 internal block index           | 存储副本；相同 index 的重复副本不会增加独立解码输入数          |
-| `DatanodeDescriptor` / `DatanodeStorageInfo` | NameNode 内存中的节点和 storage 描述对象                                           | 节点 / storage；不是远端 DataNode 进程本身                     |
-| `NumberReplicas`                             | 对一个 block/group 当前关联副本的分类统计结果                                      | live、corrupt、maintenance 等分类计数；不是保存 block 的队列   |
-| `BlockReconstructionWork`                    | 本轮调度的临时工作对象，携带 block、sources、targets 等                            | 一个候选 work；具体为 `ReplicationWork` 或 `ErasureCodingWork` |
+| 字段                           | 类型与用途                                                                                                 |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `neededReconstruction`         | `LowRedundancyBlocks`；按优先级保存需要补充冗余或改善 placement 的 block/group，以及当前恢复输入不足的条目 |
+| `pendingReconstruction`        | `PendingReconstructionBlocks`；以 block/group 为 key，记录等待确认的 targets 和最近登记时间                |
+| `postponedMisreplicatedBlocks` | `LinkedHashSet<Block>`；保存需要等待信息更新后重新判断的 block，主要涉及安全删除                           |
 
 </div>
 
-`BlocksMap` 维护 NameNode 已知的 block 元数据及存储关联，block reports 持续校正这个视图。`NumberReplicas` 是从这些关联和节点状态计算的结果。图中的主体框使用蓝色、处理步骤使用紫色；状态独立用绿色（满足）、橙色（等待）和红色（失败）标签表示。灰色用于归属边界和指标注释，同一主体不会随状态改变底色。
+容器和 `DatanodeDescriptor` 中的任务队列都位于 NameNode 内存。`BlockReconstructionWork` 是一次调度中的临时对象，验证通过后才会把任务放入相应 DataNode 描述对象的队列；远端 DataNode 在后续 heartbeat 响应中领取命令。
 
-![重构主体、NameNode 调度记录与 DataNode 执行的关系；蓝色为主体，紫色为流程，灰色为指标和归属](../../assets/images/hdfs-block-reconstruction/reconstruction-architecture.svg)
+源码：[BlockManager.java:363](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L363-L391)、[DatanodeDescriptor.java:196](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/DatanodeDescriptor.java#L196-L205)。
 
-图中的任务队列与 pending 都在 NameNode 内存中。箭头上的“加入”“取出”“报告”表示操作；框内的 key、value 和元素类型表示包含关系。heartbeat response 携带命令，DataNode 之间传输 block 数据，两者是不同的交互。
+## 2. 重构需求的发现与维护
 
-### 1.3 三个核心容器分别保存什么
+### 2.1 副本分类统计
 
-<div class="overflow-x-auto [&_table]:min-w-[48rem]" role="region" aria-label="核心容器与生命周期（窄屏可横向滚动）" tabindex="0">
+`countNodes()` 遍历 block 关联的 storages，调用 `checkReplicaOnStorage()` 统计副本。判定同时涉及 storage 状态、DataNode 管理状态、损坏记录和多余副本记录。
 
-| `BlockManager` 字段            | 类型与内容                                                                                                           | 加入与离开条件                                                                                    | 关联指标                                                                   |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `neededReconstruction`         | `LowRedundancyBlocks`；内部五个 `LightWeightLinkedSet<BlockInfo>`，按优先级保存 block/group                          | 存在冗余需求时加入；有效副本及已安排 targets 足够，或重新判断已无需求时移出                       | `LowRedundancyBlocks`：五个集合的总条目数快照                              |
-| `pendingReconstruction`        | `PendingReconstructionBlocks`；内部 `Map<BlockInfo, PendingBlockInfo>`，value 保存 target storage 列表和最近安排时间 | 最终验证通过并排入任务后记录；IBR 移除对应 target，列表为空时删条目；超时移出并等待重新评估       | `PendingReconstructionBlocks`：map 的 key 数快照；不是 target 列表长度之和 |
-| `postponedMisreplicatedBlocks` | `Set<Block>`，实际使用 `LinkedHashSet`；保存需要重扫的 block                                                         | 当前信息不足以安全处理时暂存，典型为 stale storage 影响删除判断；重扫仍需暂缓则保留，否则重新分类 | `PostponedMisreplicatedBlocks`：集合条目数                                 |
+<div class="overflow-x-auto [&_table]:min-w-[36rem]" role="region" aria-label="副本分类（窄屏可横向滚动）" tabindex="0">
+
+| 分类                                 | 判定含义                                               |
+| ------------------------------------ | ------------------------------------------------------ |
+| `LIVE`                               | 正常参与冗余统计的副本                                 |
+| `READONLY`                           | 位于 `READ_ONLY_SHARED` storage 的副本，可作为读取来源 |
+| `DECOMMISSIONING` / `DECOMMISSIONED` | 所在节点正在退出服务／已退出服务                       |
+| `MAINTENANCE_FOR_READ`               | 节点处于 entering-maintenance 且仍存活，允许读取       |
+| `MAINTENANCE_NOT_FOR_READ`           | 节点已进入 maintenance，或已不可读                     |
+| `CORRUPT`                            | 已记录为损坏的副本                                     |
+| `EXCESS`                             | 已被选为多余副本，等待删除                             |
+| `STALESTORAGE`                       | storage 的块清单尚未被视为新鲜，影响删除判断           |
+| `REDUNDANT`                          | EC 中同一 internal block 的重复副本                    |
 
 </div>
 
-这些集合不是互斥状态。若 B 缺两份 replica，而本轮只安排到一个 target，B 可以同时出现在 needed 和 pending 中。postponed 也不是普通复制任务的等待队列，它主要保护信息不足时的删除判断。
+`STALESTORAGE` 是额外计数，一个 replica 可以同时计入 `LIVE` 和 `STALESTORAGE`。EC 路径还通过 `countLiveAndDecommissioningReplicas()` 按 index 去重：同一 internal block 的两份副本不能作为两个独立的解码输入。
 
-源码入口：[BlockManager 字段](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L360-L391)、[LowRedundancyBlocks](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/LowRedundancyBlocks.java#L75-L130)、[PendingBlockInfo](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/PendingReconstructionBlocks.java#L203-L245)。
+源码：[BlockManager.java:4690](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L4690-L4813)。
 
-## 2. 为什么需要重构，先修哪些 block
+### 2.2 数量与 placement 判定
 
-### 2.1 `NumberReplicas` 不是简单计数器
-
-`BlockManager.countNodes()` 遍历一个 block 当前关联的所有 storage，通过 `checkReplicaOnStorage()` 将副本分类到 [`StoredReplicaState`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/NumberReplicas.java#L39-L69)：
-
-- `LIVE`：正常有效副本，可以计入当前冗余。
-- `READONLY`：可读但不作为普通可写副本使用，例如 PROVIDED storage。
-- `DECOMMISSIONING`：DataNode 正在退出服务，通常需要把唯一数据迁出。
-- `DECOMMISSIONED`：DataNode 已退出服务，只在极端情况下作为连续块 source 兜底。
-- `MAINTENANCE_FOR_READ`：DataNode 正在进入 maintenance 且仍然存活，可以继续读取。
-- `MAINTENANCE_NOT_FOR_READ`：副本已经不可读，不能作为 source。
-- `CORRUPT`：副本损坏，不能作为 reconstruction 输入。
-- `EXCESS`：副本已被选为多余副本，等待删除。
-- `STALESTORAGE`：block report 可能过期，删除决策必须保持保守。
-- `REDUNDANT`：EC 中同一 internal block 的重复副本。
-
-这些状态不是简单互斥标签。例如一个正常 storage 上的 replica 可以同时使 `LIVE` 和 `STALESTORAGE` 计数增加；`STALESTORAGE` 表达的是报告新鲜度，而不是数据可读性的替代状态。
-
-对于连续块，每个 storage 上保存的是完整 block。对于 EC block group，NameNode 还必须按 internal block index 去重：同一个 internal block 出现两份，不能把它们当成两个独立的编码输入。
-
-### 2.2 “需要 reconstruction”包含数量和拓扑两部分
-
-最终判断并不是：
+`isNeededReconstruction()` 要求 block 已 complete，并检查有效副本数和 placement。以下为保留判定条件的伪代码：
 
 ```text
-liveReplicas < replicationFactor
+required = max(expected - maintenanceReplicas, minimumLive)
+effective = liveReplicas + pendingTargets
+
+enough = effective >= required
+         && (pendingTargets > 0 || placementSatisfied)
+needed = block.isComplete() && !enough
 ```
 
-Hadoop 3.4.1 的核心条件可以简化为：
+普通 block 的 `expected` 是文件配置的副本数，EC 则使用 `getRealTotalBlockNum()`。`minimumLive` 对普通 block 取 maintenance 最小副本数与文件副本数的较小值，对 EC 取 `getRealDataBlockNum()`，短 block group 因而可能小于 EC policy 的 data unit 数。
 
-```java
-boolean isNeededReconstruction(
-    BlockInfo block, NumberReplicas replicas, int pending) {
-  return block.isComplete()
-      && !hasEnoughEffectiveReplicas(block, replicas, pending);
-}
+pending targets 暂时计入有效副本；当数量已足够且仍有 pending 时，调度先等待报告，避免重复安排工作。没有 pending 后，placement 仍不满足也会触发重构，例如向新的 rack 补一份副本。
 
-boolean hasEnoughEffectiveReplicas(
-    BlockInfo block, NumberReplicas replicas, int pending) {
-  int required = getExpectedLiveRedundancyNum(block, replicas);
-  int effective = replicas.liveReplicas() + pending;
+源码：[BlockManager.java:1147](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L1147-L1153)、[BlockManager.java:2219](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L2219-L2226)、[BlockManager.java:5134](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L5134-L5163)。
 
-  return effective >= required
-      && (pending > 0 || isPlacementPolicySatisfied(block));
-}
-```
+### 2.3 初始化扫描与运行期更新
 
-源码见 [`isNeededReconstruction()`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L5134-L5151) 和 [`hasEnoughEffectiveReplicas()`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L2220-L2228)。
+`initializeReplQueues()` 通过 `processMisReplicatedBlocks()` 启动 `Reconstruction Queue Initializer`。初始化线程分批持有 FSNamesystem 写锁，遍历 `BlocksMap` 并调用 `processMisReplicatedBlock()`；批次之间释放锁，避免长时间阻塞其他 namespace 操作。
 
-这里有三个关键点。
+`processMisReplicatedBlock()` 按以下顺序处理：
 
-第一，已安排但尚未确认的 pending targets 会暂时计入 effective replicas，避免同一个 block 在每轮 `RedundancyMonitor` 中被无限重复调度。
+1. block 已不属于文件：加入 invalidation，返回 `INVALID`。
+2. block 未 complete：返回 `UNDER_CONSTRUCTION`。
+3. 需要重构且成功加入 needed：返回 `UNDER_REPLICATED`。
+4. 需要处理额外冗余：能安全处理则返回 `OVER_REPLICATED`，否则返回 `POSTPONE`。
+5. 其余情况返回 `OK`。
 
-第二，maintenance replica 会影响 expected live redundancy。系统允许 maintenance 期间减少临时 live copies，但仍要满足 `dfs.namenode.maintenance.replication.min`。
+初始化扫描的调用方将 `POSTPONE` 结果放入 postponed。运行期间，副本报告、节点失效、副本数修改，以及 decommission/maintenance 处理会沿各自入口更新冗余需求。报告路径中的 `addStoredBlock()`、`updateNeededReconstructions()` 负责维护 needed，无需等待下一次全量扫描。
 
-第三，即使 replica 数量已经达到要求，placement policy 不满足时仍需要 reconstruction。此时目的不是补数量，而是把副本复制到新的 rack 或 upgrade domain，降低相关故障造成的同时丢失风险。
+初始化标志在启动异步扫描后便置为 true，扫描是否结束需结合 `ReconstructionQueuesInitProgress` 判断。队列初始化与任务下发的运行条件也不同：非 HA 场景可以在 SafeMode 达到初始化阈值后开始扫描，`computeDatanodeWork()` 则在 SafeMode 中直接返回。
 
-### 2.3 全量扫描与增量更新
+源码：[BlockManager.java:3830](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L3830-L3858)、[BlockManager.java:3927](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L3927-L4058)、[BlockManager.java:4120](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L4120-L4154)、[BlockManager.java:5504](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L5504-L5518)。
 
-当 HA 状态及初始化条件允许时，NameNode 启动 reconstruction queues 初始化。初始化可与其他处理并行；非 HA 场景也可以在 SafeMode 内达到队列初始化阈值后提前开始扫描。`BlockManager.processMisReplicatedBlocks()` 清空 `neededReconstruction`，启动 `Reconstruction Queue Initializer`，分批扫描整个 `BlocksMap`：
+### 2.4 优先级与候选遍历
 
-```java
-while (namesystem.isRunning() && blocks.hasNext()) {
-  writeLock();
-  try {
-    for (int i = 0; i < numBlocksPerIteration && blocks.hasNext(); i++) {
-      processMisReplicatedBlock(blocks.next());
-    }
-  } finally {
-    writeUnlock();
-    sleepOutsideWriteLock();
-  }
-}
-```
+`LowRedundancyBlocks` 内部使用五个 `LightWeightLinkedSet<BlockInfo>`。普通 block 的主要分类如下，前提是该 block 已需要重构：
 
-分批持有 write lock 的目的，是避免大 namespace 在 queue 初始化期间长期阻塞其他 NameNode 操作。扫描同时记录 `ReconstructionQueuesInitProgress`。源码见 [`processMisReplicatesAsync()`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L3950-L4060)。
+<div class="overflow-x-auto [&_table]:min-w-[36rem]" role="region" aria-label="重构优先级（窄屏可横向滚动）" tabindex="0">
 
-全量扫描并不是唯一入口。运行期间，以下事件都会增量调用冗余更新逻辑：
-
-- IBR/FBR 增加或删除 replica；
-- corrupt replica 被发现或清理；
-- 文件关闭后 block 变为 complete；
-- `setReplication()` 修改目标副本数；
-- DataNode dead、decommission 或 maintenance 改变有效副本；
-- placement policy 的有效结果发生变化。
-
-全量扫描负责建立初始状态，增量路径负责维持状态。初始化过程中即使 `BlocksMap` 出现新增 block，也不会因为迭代器错过而永久漏检，因为新增 replica 的正常处理路径还会进行增量判断。
-
-### 2.4 `processMisReplicatedBlock()` 的分类决策
-
-核心控制流如下：
-
-```java
-if (block.isDeleted()) {
-  addToInvalidates(block);
-  return INVALID;
-}
-if (!block.isComplete()) {
-  return UNDER_CONSTRUCTION;
-}
-
-NumberReplicas replicas = countNodes(block);
-
-if (isNeededReconstruction(block, replicas)) {
-  if (neededReconstruction.add(block, ...)) {
-    return UNDER_REPLICATED;
-  }
-}
-
-if (shouldProcessExtraRedundancy(replicas, expected)) {
-  if (!canSafelyChooseExcessReplica(block)) {
-    return POSTPONE;
-  }
-  return OVER_REPLICATED;
-}
-
-return OK;
-```
-
-注意：`postponedMisreplicatedBlocks` 不是“所有 over-replicated blocks 的集合”。它保存的是当前无法安全完成删除判断的 mis-replicated blocks。典型场景是 failover 后 storage 的 block report 仍然 stale：新 Active NameNode 不知道旧 Active 是否已经下发过删除，如果此时继续删除，可能把实际冗余降到安全线以下。
-
-这里的 `UNDER_REPLICATED / OVER_REPLICATED / POSTPONE` 是分类方法的返回结果，不是 `BlockInfo` 持久化状态，也不是三个容器的互斥枚举。`processMisReplicatedBlock()` 用于全量扫描和重扫；运行期事件还有 `updateNeededReconstructions()`、副本增删等入口，不能把所有报告路径都画成调用这个方法。
-
-本文关注 COMPLETE block 的常规冗余恢复。上述分类入口拒绝未完成 block，而调度方法的防御检查使用 `isCompleteOrCommitted()`；不能据此把“只有 COMPLETE”推广为所有内部入口共同的状态检查。Pipeline recovery 和 lease/block recovery 则处理写入 pipeline、长度及 generation stamp 等另一类问题。
-
-### 2.5 `LowRedundancyBlocks` 的风险优先级
-
-`neededReconstruction` 的实际类型是 [`LowRedundancyBlocks`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/LowRedundancyBlocks.java)。它内部不是一个 FIFO，而是五个 `LightWeightLinkedSet<BlockInfo>`：
-
-- `QUEUE_HIGHEST_PRIORITY`：再丢一份就可能无法恢复，例如只剩 1 个 live replica。
-- `QUEUE_VERY_LOW_REDUNDANCY`：当前冗余低于期望值的三分之一，例如 replication factor 为 10、只剩 2 份。
-- `QUEUE_LOW_REDUNDANCY`：普通低冗余，例如 replication factor 为 3、只剩 2 份。
-- `QUEUE_REPLICAS_BADLY_DISTRIBUTED`：副本数量足够但 placement 不满足，例如三份副本都位于同一 rack。
-- `QUEUE_WITH_CORRUPT_BLOCKS`：可用输入不足，当前无法重构，例如所有副本均已 corrupt。
-
-最后一类放在队尾看似反直觉，但它缺少足够的可恢复输入，优先选择也无法产生进展。将调度能力优先给仍可恢复的数据，反而能减少新的不可恢复 block。
-
-连续块与 EC 的 priority 计算不同。连续块主要看 live/expected 比例；EC 必须先保证至少有 `dataBlockNum` 个不同 internal blocks：
-
-```java
-// contiguous block
-// both block types first check live >= expected → BADLY_DISTRIBUTED
-if (live == 0 && (hasOutOfServiceCopy || hasReadOnlyCopy)) HIGHEST;
-else if (live == 0)                    CORRUPT;
-else if (live == 1)                    HIGHEST;
-else if (live * 3 < expected)          VERY_LOW;
-else                                   LOW;
-
-// striped block group
-if (live < dataBlocks && live + outOfService >= dataBlocks) HIGHEST;
-else if (live < dataBlocks)                                  CORRUPT;
-else if (live == dataBlocks)                                 HIGHEST;
-else if ((live - dataBlocks) * 3 < parityBlocks + 1)          VERY_LOW;
-else                                                         LOW;
-```
-
-这里的 `dataBlocks` 对应 `getRealDataBlockNum()`，短 block group 可能小于 EC policy 的 data unit 数。EC 中 `live == dataBlocks` 意味着仍然可解码，但已经没有任何额外容错，因此属于最高风险。
-
-每个优先级集合使用 bookmark 记录上次扫描位置，下一轮从 bookmark 继续，避免队列头部无法调度的 block 永久阻挡后续 block。`dfs.namenode.redundancy.queue.restart.iterations` 又会定期把扫描位置重置到队头，确保新进入的高风险 block 不会长时间等待。
-
-## 3. `RedundancyMonitor` 如何安全安排工作
-
-### 3.1 调度周期与候选预算
-
-`BlockManager.activate()` 启动两个相关线程：
-
-- `RedundancyMonitor`：周期性生成 reconstruction 和 invalidation 工作，并处理 timeout/rescan；
-- `PendingReconstructionMonitor`：扫描 `pendingReconstruction` 中超过 timeout 的项目。
-
-`RedundancyMonitor.run()` 的主体非常直接：
-
-```java
-while (namesystem.isRunning()) {
-  if (isPopulatingReplQueues()) {
-    computeDatanodeWork();
-    processPendingReconstructions();
-    rescanPostponedMisreplicatedBlocks();
-    processTimedOutExcessBlocks();
-  }
-  sleep(redundancyRecheckIntervalMs);
-}
-```
-
-源码见 [`RedundancyMonitor`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L5338-L5365)。`isPopulatingReplQueues()` 检查 HA state 是否允许填充队列以及 `initializedReplQueues` 标志。该标志在启动异步初始化后就置为 true，**不表示全量扫描已经完成**；`computeDatanodeWork()` 还会单独检查 SafeMode，处于 SafeMode 时不生成复制或删除工作。源码见 [initializeReplQueues()](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L5504-L5518) 和 [computeDatanodeWork()](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L5381-L5407)。
-
-每轮候选预算由 live DataNode 数量决定：
-
-```java
-blocksToProcess = liveDatanodes
-    * dfs.namenode.replication.work.multiplier.per.iteration;
-
-nodesToInvalidate = ceil(liveDatanodes
-    * dfs.namenode.invalidate.work.pct.per.iteration);
-```
-
-`work.multiplier` 控制的是每轮最多检查多少 low-redundancy blocks，不是保证产生多少任务。没有可用 source、找不到 target、source 达到 stream limit、block 已被其他事件修复，都会让实际 scheduled work 少于候选数。
-
-### 3.2 三阶段调度与锁边界
-
-![三阶段调度：锁内读取主体并构造 work，锁外选择 targets，重新加锁验证并记录任务与 pending](../../assets/images/hdfs-block-reconstruction/reconstruction-scheduling.svg)
-
-`computeReconstructionWorkForBlocks()` 是整条 NameNode 调度链的核心。它有意拆成三个阶段：
-
-```java
-// Phase 1: under FSNamesystem write lock
-for (BlockInfo block : selectedBlocks) {
-  BlockReconstructionWork item = scheduleReconstruction(block, priority);
-  if (item != null) work.add(item);
-}
-
-// Phase 2: without FSNamesystem global lock
-for (BlockReconstructionWork item : work) {
-  item.chooseTargets(placementPolicy, excludedNodes);
-}
-
-// Phase 3: reacquire write lock
-for (BlockReconstructionWork item : work) {
-  DatanodeStorageInfo[] targets = item.getTargets();
-  if (targets != null && targets.length > 0
-      && validateReconstructionWork(item)) {
-    scheduledWork++; // validation performs enqueue + pending update
-  }
-}
-```
-
-源码见 [`computeReconstructionWorkForBlocks()`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L2126-L2216)。
-
-### 3.3 Phase 1：基于一致的 namespace 状态构造 work
-
-`scheduleReconstruction()` 在 write lock 下完成：
-
-1. 排除 deleted、重新打开 append 等不再适用的 block；
-2. 重新统计当前 replica；
-3. 选择可用 source DataNodes；
-4. 计算当前还缺多少 redundancy；
-5. 连续块生成 `ReplicationWork`，条带块生成 `ErasureCodingWork`。
-
-EC 路径还会检查 source 数量，并整理 internal block indices；若已有 pending targets，会等待上次 reconstruction。真正解码所需的独立输入数量由 real data block count 决定，同一 index 的重复副本不能增加可恢复信息。
-
-### 3.4 Phase 2：锁外执行 target placement
-
-target placement 需要查询网络拓扑、storage policy、可用空间和排除集合。它比内存状态判断更慢，因此源码明确标注：
-
-```java
-// choose replication targets: NOT HOLDING THE GLOBAL LOCK
-```
-
-排除集合至少包含：
-
-- 已经保存该 block 的 DataNodes；
-- corrupt 或 decommissioning 等 containing nodes；
-- 同一 block 已经在 `pendingReconstruction` 中的 targets。
-
-如果在整个 placement 过程中持续持有 FSNamesystem write lock，集群出现大量 low-redundancy blocks 时，重构调度会直接放大 NameNode RPC 延迟。
-
-### 3.5 Phase 3：重新验证锁外结果
-
-释放锁意味着 namespace 可能已经变化。因此 `validateReconstructionWork()` 必须重新验证：
-
-- block 是否仍然存在并保持可重构状态；
-- live + pending 是否已经达到 required redundancy；
-- placement 是否已经被其他 replica 修复；
-- 新 targets 是否至少改善原来的 placement violation。
-
-验证通过后才会：
-
-```text
-addTaskToDatanode()
-→ incrementBlocksScheduled(targets)
-→ pendingReconstruction.increment(block, targets)
-→ 必要时从 neededReconstruction 移除
-```
-
-这是一个典型的 optimistic pattern：锁内读取状态，锁外执行昂贵计算，再锁内检查前提是否仍成立。性能依赖锁外 placement，正确性依赖最后的 revalidation。
-
-`ScheduledReplicationBlocks` 就来自本轮 `scheduledWork`：每个通过验证的 work 加 1，无论它有几个 targets，也无论它走普通复制还是 EC。这个数在调度时产生；heartbeat 是否领取、传输是否成功，需要观察后续阶段。
-
-### 3.6 Source 限流与 target 约束
-
-source DataNode 同时承担客户端流量和后台复制流量。`chooseSourceDatanodes()` 会检查节点当前排队的普通复制任务与 EC 任务总数：
-
-```java
-queued = blocksToBeReplicated + blocksToBeErasureCoded;
-
-if (priority != HIGHEST
-    && !nodeIsLeavingService
-    && queued >= maxReplicationStreams) {
-  skipSource();
-}
-
-if (queued >= replicationStreamsHardLimit) {
-  skipSource();
-}
-```
-
-soft limit 可以被最高优先级任务，以及 decommission/entering-maintenance 的数据迁出需求突破；常规 source 选择还受 hard limit 约束。这里使用的是 NameNode 描述对象上的排队工作与预留计数，不是对 DataNode 当前网络传输的精确测量；soft/hard limit 不能直接解释为集群实际并发数。
-
-target 选择则由 block type 对应的 `BlockPlacementPolicy` 完成。连续块通常使用 replication policy；EC 使用 striped placement policy。除了避开 containing/pending nodes，还要满足 storage type、rack、upgrade domain、剩余空间和写入负载等约束。
-
-## 4. DataNode 如何执行复制与 EC 重构
-
-### 4.1 连续块：`ReplicationWork`
-
-`ReplicationWork.addTaskToDatanode()` 将任务加入第一个 source DataNode：
-
-```java
-srcNodes[0].addBlockToBeReplicated(block, targets);
-```
-
-source 的后续 heartbeat 到达 Active NameNode、且本轮命令预算允许时，`DatanodeManager` 从该节点的待执行队列取出 `BlockTargetPair`，返回：
-
-```text
-BlockCommand(DNA_TRANSFER)
-```
-
-DataNode 的 `BPOfferService` 收到命令后调用：
-
-```java
-dn.transferBlocks(blockPoolId, blocks, targets, storageTypes, storageIds);
-```
-
-每个 block 最终进入 `DataTransfer` 线程，由 source 读取本地 replica，连接第一个 target，并通过 pipeline 传输到后续 targets。目标 DataNode 落盘成功后，再通过 IBR 或后续 FBR 告诉 NameNode。
-
-相关源码：
-
-- [`ReplicationWork`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/ReplicationWork.java)
-- [`DatanodeManager.handleHeartbeat()`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/DatanodeManager.java#L1860-L1920)
-- [`BPOfferService.processCommandFromActive()`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/BPOfferService.java#L716-L808)
-- [`DataNode.transferBlocks()`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/DataNode.java#L2895-L2907)
-
-### 4.2 条带块：不一定总是解码
-
-`ErasureCodingWork` 是调度工作类型，不意味着一定进入 decoder。`addTaskToDatanode()` 有三种执行策略：
-
-**Placement-only。** 所有 internal blocks 都存在，只是 rack 分布不满足。此时不需要 EC decode，只复制一个 internal block 到新 rack。
-
-**节点退出服务。** internal blocks 完整，但某些唯一副本位于 decommissioning 或 entering-maintenance DataNode。此时可以直接复制这些 internal blocks。
-
-**真正缺失 internal block。** target DataNode 收到 `BlockECReconstructionCommand`，作为 reconstruction coordinator 从 source DataNodes 读取输入并执行解码。
-
-这意味着：
-
-```text
-EC block group 需要 reconstruction
-    ≠ 每次都必须运行 decoder
-```
-
-如果只是 placement 或迁出节点问题，复制已有 internal block 比读取 k 个 source 再解码更便宜。
-
-### 4.3 `StripedBlockReconstructor` 的数据流
-
-真正的 EC reconstruction 由 `ErasureCodingWorker` 创建 `StripedBlockReconstructor` 并提交到 DataNode 的 striped reconstruction thread pool：
-
-```java
-StripedBlockReconstructor task =
-    new StripedBlockReconstructor(worker, reconstructionInfo);
-
-stripedReconstructionPool.submit(task);
-incrementXmitsInProcess(weightedTaskCost);
-```
-
-每轮 buffer 的执行步骤是：
-
-```java
-while (position < maxTargetLength) {
-  stripedReader.readMinimumSources(length); // [1] read k inputs
-  decoder.decode(inputs, erasedIndices, outputs); // [2] reconstruct
-  stripedWriter.transferData2Targets(); // [3] write targets
-  updatePosition(length);
-}
-```
-
-源码见 [`StripedBlockReconstructor.reconstruct()`](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/StripedBlockReconstructor.java#L85-L129)。
-
-`StripedReader` 会从满足解码要求的最少 source 集合读取数据。某些 source 读取失败时，它可以切换到额外 source；decoder 根据 erased indices 恢复缺失 buffers；`StripedWriter` 再将输出发送到目标 storage。读、decode、写分别有独立 metrics，Hadoop 3.4.1 也支持 reconstruction read/write throttler。
-
-EC coordinator 的 CPU、网络读和网络写可能集中在同一 target DataNode，因此 EC backlog 的瓶颈不一定在 NameNode 调度，也不一定能通过调大 NameNode work multiplier 解决。
-
-### 4.4 Work、NameNode 任务队列与远端执行的对应关系
-
-<div class="overflow-x-auto [&_table]:min-w-[48rem]" role="region" aria-label="工作类型与节点任务队列（窄屏可横向滚动）" tabindex="0">
-
-| 工作分支                   | NameNode 内存中的队列及元素                                                     | 哪个 DataNode 领取              | 执行动作                                                   |
-| -------------------------- | ------------------------------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------- |
-| 普通 block 复制            | source 的 `DatanodeDescriptor.replicateBlocks`，元素为 `BlockTargetPair`        | source                          | `DNA_TRANSFER`，发送 block 数据                            |
-| EC internal block 直接复制 | source 的 `ecBlocksToBeReplicated`，元素同样为 `BlockTargetPair`                | source                          | `DNA_TRANSFER`，复制已有 internal block                    |
-| EC 解码重构                | 第一个 target 的 `ecBlocksToBeErasureCoded`，元素为 `BlockECReconstructionInfo` | 第一个 target，作为 coordinator | `BlockECReconstructionCommand`，读取输入、解码并写 targets |
+| 优先级                             | 普通 block 的判定                                            |
+| ---------------------------------- | ------------------------------------------------------------ |
+| `QUEUE_HIGHEST_PRIORITY`           | 仅剩 1 份 live；或没有 live，但仍有 out-of-service／只读副本 |
+| `QUEUE_VERY_LOW_REDUNDANCY`        | `live * 3 < expected`，且未命中最高优先级                    |
+| `QUEUE_LOW_REDUNDANCY`             | 其余数量不足的情况                                           |
+| `QUEUE_REPLICAS_BADLY_DISTRIBUTED` | live 数量达到 expected，但 placement 不满足                  |
+| `QUEUE_WITH_CORRUPT_BLOCKS`        | 没有 live，也没有上述其他恢复来源                            |
 
 </div>
 
-任务从上述队列取出，只说明进入命令下发阶段；pending 仍等待新副本报告。反过来，pending 也不能说明 DataNode 已经开始执行。源码见 [DatanodeDescriptor 队列定义](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/DatanodeDescriptor.java#L196-L205) 和 [ErasureCodingWork.addTaskToDatanode()](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/ErasureCodingWork.java#L138-L177)。
+EC 使用不同的风险阈值。令 `k = getRealDataBlockNum()`、`m = getParityBlockNum()`：live 等于 k 时已无额外容错，属于最高优先级；live 小于 k，但加上 out-of-service 副本仍达到 k，也归入最高优先级；恢复输入仍不足则归入 corrupt queue。其余低冗余 group 使用 `(live - k) * 3 < m + 1` 区分 very-low 与普通 low。
 
-### 4.5 RS-6-3，缺失一个 internal block
+`chooseLowRedundancyBlocks()` 从各集合的 bookmark 继续遍历，达到预算便停止。**corrupt queue 会被扫描以清理已删除条目，但不会加入返回的重构候选列表。** 遍历到最后一级或达到配置的重置条件时，bookmark 回到队头。选为候选只推进遍历位置，具体移除发生在后续状态检查中。
 
-一个完整的 RS-6-3 block group 包含 6 个 data internal blocks 和 3 个 parity internal blocks。假设 9 个 internal blocks 中丢失 index 2，仍有 8 个不同 index 的 live blocks。
+源码：[LowRedundancyBlocks.java:211](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/LowRedundancyBlocks.java#L211-L284)、[LowRedundancyBlocks.java:517](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/LowRedundancyBlocks.java#L517-L559)。
 
-```text
-dataBlocks=6, parityBlocks=3
-live unique internal blocks=8
-  → 仍可解码
-  → neededReconstruction
+## 3. RedundancyMonitor 的调度过程
 
-scheduleReconstruction()
-  → 至少选择 6 个不同 index 的 source
-  → 选择 missing index 2 的 target
-  → ErasureCodingWork
+### 3.1 运行条件与每轮预算
 
-target EC Worker
-  → StripedReader 读取最少 6 个 source
-  → decoder 恢复 index 2
-  → StripedWriter 写入 target
-  → target block report
-```
-
-如果只剩 5 个不同 internal blocks，且 out-of-service nodes 上也没有可用输入，那么 block group 进入 corrupt queue。此时增加调度线程、target 数量或 work multiplier 都无法恢复数据，因为解码需要的最小信息量已经不存在。
-
-如果 9 个 internal blocks 全部存在，只是 rack 分布不合格，`ErasureCodingWork` 会选择一个 internal block 做普通复制，不运行 decoder。
-
-## 5. 完成确认、超时与状态收敛
-
-![报告和超时触发重新评估；需要重构、安全删除和暂缓判断是不同分支，集合并非互斥状态](../../assets/images/hdfs-block-reconstruction/reconstruction-state-machine.svg)
-
-图中反馈统一回到“当前事实与冗余判断”。报告更新存储关联，timeout 只清理尝试记录；重扫与重新调度使用各自的源码入口，并不是所有事件都调用同一个分类方法。
-
-### 5.1 `pendingReconstruction` 记录的是尝试，不是完成
-
-`PendingReconstructionBlocks` 保存：
+`BlockManager.activate()` 启动 `RedundancyMonitor`；`PendingReconstructionBlocks.start()` 另行启动 pending 超时检查线程。`RedundancyMonitor` 的每轮调用顺序如下，省略异常退出处理和时间戳更新：
 
 ```text
-BlockInfo
-  → last scheduled timestamp
-  → target DatanodeStorageInfo list
+isPopulatingReplQueues()
+  → computeDatanodeWork()
+  → processPendingReconstructions()
+  → rescanPostponedMisreplicatedBlocks()
+  → processTimedOutExcessBlocks()
+sleep(redundancyRecheckIntervalMs)
 ```
 
-当 `BlockManager.addBlock()` 接受 target storage 通过 IBR 汇报的 `RECEIVED_BLOCK`，并确认 generation stamp 与当前 `BlockInfo` 一致时，会执行：
+`isPopulatingReplQueues()` 检查 HA state 与队列初始化标志。通过后，`computeDatanodeWork()` 再检查 SafeMode，并分别计算重构和删除工作预算：
 
-```java
-pendingReconstruction.decrement(storedBlock, storageInfo);
+```text
+候选扫描预算 = live DataNode 数 × blocksReplWorkMultiplier
+删除节点预算 = ceil(live DataNode 数 × blocksInvalidateWorkPct)
 ```
 
-同一个 block 可能有多个 targets。只有所有已记录 target 都被移除后，这个 pending entry 才消失。随后副本处理逻辑根据最新 live + pending 状态维护低冗余队列，并检查是否需要处理额外冗余。FBR 能更新 `BlocksMap` 中的实际 replica，但源码中直接执行 `pendingReconstruction.decrement()` 的是 IBR `blockReceived` 路径；如果 IBR 丢失，pending entry 仍需依靠 timeout 被清理，再按 FBR 已更新的事实重新判断。
+候选可能因没有 source、找不到 target 或需求已消失而无法生成任务，实际成功调度数可能小于扫描预算。轮次间隔还包含本轮处理耗时，并非固定频率定时器。
 
-### 5.2 Timeout 不会取消 DataNode 上的任务
+源码：[BlockManager.java:5338](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L5338-L5407)。
 
-`PendingReconstructionMonitor` 定期扫描 map：
+### 3.2 候选选择与锁边界
 
-```java
-if (now > pending.timestamp + timeout) {
-  timedOutItems.add(block);
-  pendingReconstructions.remove(block);
-}
+`computeBlockReconstructionWork()` 在写锁下选出候选，再进入 `computeReconstructionWorkForBlocks()`。后者分三批处理：先为候选构造 work，释放锁后选择 targets，最后重新加锁逐项验证并登记任务。
+
+![三阶段调度：写锁内构造 work，锁外选择 targets，重新加锁后复查并登记任务；锁外收到 IBR 可使需求消失](../../assets/images/hdfs-block-reconstruction/reconstruction-scheduling-spaced.svg)
+
+选择 targets 期间，block 可能被删除、重新打开 append，或已收到其他副本报告。最终验证必须重新读取这些条件，不能直接使用第一阶段的统计结果。
+
+源码：[BlockManager.java:2094](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L2094-L2216)。
+
+### 3.3 Source 选择与 work 构造
+
+`scheduleReconstruction()` 先移除已删除或不再满足 `isCompleteOrCommitted()` 的 block，再调用 `chooseSourceDatanodes()`。该方法遍历关联 storages，在统计副本的同时选择 source：损坏、excess 和不可读 maintenance 副本被排除；普通复制通常选一个 source，EC 收集多个 source 及其 internal block indices。
+
+source 选择受 soft/hard limit 约束。检查值为 `getNumberOfBlocksToBeReplicated() + getNumberOfBlocksToBeErasureCoded()`，包含描述对象中的排队工作；普通复制计数还包含尚未选出 targets 的预留工作。最高优先级和正在退出服务的节点可突破 soft limit，常规选择仍受 hard limit 限制。普通 block 在没有其他来源时，还可能使用存活的 decommissioned 副本兜底。
+
+随后计算有效副本和缺口。若已满足要求，移出 needed；否则构造 `ReplicationWork` 或 `ErasureCodingWork`。EC 还检查 source 数量、调整 index 顺序，并记录忙碌节点上的 indices，避免把已有但繁忙的 internal block 当成缺失块；已有 pending targets 时，本轮等待原重构。
+
+`ReplicationWork` 构造时增加 source 的 `pendingReplicationWithoutTargets`，在 `chooseTargets()` 的 `finally` 中减回。这样，同一批尚未入队的普通复制工作也参与 source 压力估计。
+
+源码：[BlockManager.java:2230](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L2230-L2352)、[BlockManager.java:2560](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L2560-L2673)、[ReplicationWork.java:26](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/ReplicationWork.java#L26-L66)、[DatanodeDescriptor.java:741](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/DatanodeDescriptor.java#L741-L751)。
+
+### 3.4 锁外选择 targets
+
+`chooseTargets()` 使用 block type 对应的 `BlockPlacementPolicy`。排除集合包含现有副本所在节点和已登记的 pending targets，再结合 storage policy、拓扑、剩余空间及负载选择目标 storages；rack 或 upgrade domain 的具体约束取决于启用的 placement policy。
+
+这一步不持有 FSNamesystem 全局写锁。它只填写 work 的 targets，尚未下发任务；没有选到 target 的 work 会在第三阶段被跳过。
+
+源码：[BlockManager.java:2157](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L2157-L2198)。
+
+### 3.5 重新验证与任务登记
+
+`validateReconstructionWork()` 再次检查 block 状态和 live + pending。对于数量足够但 placement 不满足的 block，还要求新 targets 至少减少 placement 所需的额外副本数。验证通过后，在同一段写锁内执行：
+
+```text
+work.addTaskToDatanode()
+  → 增加 targets 的 blocksScheduled
+  → pendingReconstruction.increment(block, targets)
+  → 若 live + 原 pending + 新 targets 已足够，移出 needed
 ```
 
-下一轮 `RedundancyMonitor.processPendingReconstructions()` 从 `BlocksMap` 取得最新 `BlockInfo`，重新统计副本；如果仍需要 reconstruction，就把 block 再次加入 `neededReconstruction`。
+`scheduledWork` 对每个成功 work 加 1。任务留在 NameNode 的节点队列中，直到 heartbeat 处理路径取出；报告确认之前，pending 记录持续存在。
 
-这里不存在一个跨 NameNode/DataNode 的 cancel RPC。原来的 DataNode 任务可能仍在排队、执行或即将汇报。因此 timeout 之后可能出现：
+源码：[BlockManager.java:2355](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L2355-L2414)。
 
-1. NameNode 对同一 block 生成新的 reconstruction work；
-2. 原任务稍后成功；
-3. block 临时出现 extra redundancy；
-4. excess/invalidation 流程选择并安全删除多余 replica。
+## 4. DataNode 的复制与 EC 重构
 
-这是一种依赖幂等状态收敛的设计，而不是 exactly-once task execution。最终安全性来自重新计算 block 当前事实，不来自某个 task id 的唯一执行承诺。
+### 4.1 命令领取与执行分支
 
-### 5.3 NameNode 重启、Failover 与安全删除
+三种工作使用不同的节点队列，队列均属于 NameNode 中的 `DatanodeDescriptor`：
 
-`neededReconstruction` 和 `pendingReconstruction` 都是 NameNode 内存结构，不写入 edit log。NameNode 重启后不会恢复“上次调度到哪个 target”的任务日志，而是通过 namespace 中的 `BlockInfo`、DataNode block reports 和全量 mis-replication scan 重建当前状态。
+<div class="overflow-x-auto [&_table]:min-w-[42rem]" role="region" aria-label="任务队列与执行节点" tabindex="0">
 
-这带来两个结果。
-
-第一，pending work 可以丢失，但 block 不会永久漏修。新的 Active 重新统计后，仍然低冗余的 block 会重新进入 `neededReconstruction`。
-
-第二，failover 后删除 replica 必须更加保守。假设旧 Active 已经向某个 DataNode 下发删除命令，但新 Active 尚未收到该节点的新 block report。新 Active 看到的副本集合可能包含实际上已被删除的 replica。如果它根据这个旧视图继续选择 excess replica，就可能删除过多数据。
-
-因此 `BlockManager` 对 `postponedMisreplicatedBlocks` 的注释明确说明：failover 后 over-replicated blocks 可能要等相关 replicas 完成 block report，才进行处理。`rescanPostponedMisreplicatedBlocks()` 每轮只检查有限数量，仍然需要延迟的 block 会重新放回集合。
-
-同一保护也用于 corrupt replica invalidation：当其他 replica 位于 stale storage，NameNode 默认会推迟删除 corrupt replica，避免根据不完整信息删除最后一份可能仍有价值的数据。
-
-### 5.4 用 B 的生命周期核对计数单位
-
-继续第 1 节的普通 block B，假设只统计 B 对指标的贡献、placement 正常，且第一次调度找齐 DN4、DN5。表中的 needed/pending 值表示容器状态，监控快照可能稍后才反映这些变化。
-
-<div class="overflow-x-auto [&_table]:min-w-[48rem]" role="region" aria-label="block B 的计数变化（窄屏可横向滚动）" tabindex="0">
-
-| 事件                              | live replicas | B 的 pending targets | needed 条目数 | pending 条目数 |
-| --------------------------------- | ------------- | -------------------- | ------------- | -------------- |
-| DN2、DN3 的丢失已处理             | 1             | 无                   | 1             | 0              |
-| 安排 DN4、DN5，live + pending = 3 | 1             | DN4、DN5             | 0             | 1              |
-| 接受 DN4 的 IBR                   | 2             | DN5                  | 0             | 1              |
-| 接受 DN5 的 IBR                   | 3             | 无                   | 0             | 0              |
+| 工作                       | 队列 / 元素                                              | 领取命令的 DataNode             | 命令                                |
+| -------------------------- | -------------------------------------------------------- | ------------------------------- | ----------------------------------- |
+| 普通 block 复制            | `replicateBlocks` / `BlockTargetPair`                    | source                          | `DNA_TRANSFER`                      |
+| EC internal block 直接复制 | `ecBlocksToBeReplicated` / `BlockTargetPair`             | source                          | `DNA_TRANSFER`                      |
+| EC 解码重构                | `ecBlocksToBeErasureCoded` / `BlockECReconstructionInfo` | 第一个 target，作为 coordinator | `DNA_ERASURE_CODING_RECONSTRUCTION` |
 
 </div>
 
-第二行对 `ScheduledReplicationBlocks` 的本轮贡献是 **1**，不是 2。第三行 pending target 已从两个变成一个，但 `PendingReconstructionBlocks` 的贡献仍是 **1**。
+`DatanodeManager.handleHeartbeat()` 根据 DataNode 上报的 `xmitsInProgress` 和可用传输预算，从这些队列按比例取任务。source 筛选阶段的队列限流与 heartbeat 阶段的命令预算分别生效；任务入队后仍可能等待若干轮 heartbeat。
 
-若第一次只能安排 DN4，第二行就变成 `live=1, pending targets={DN4}, needed=1, pending=1`。这直接说明 needed 与 pending 可以重叠，不能相加得到“尚未修复的唯一 block 总数”。
+`ErasureCodingWork.addTaskToDatanode()` 根据任务条件选择直接复制或解码：internal blocks 齐全但 rack 不足时复制一块到新 rack；存在退出服务的节点且 internal blocks 齐全时，复制需要迁出的块；其余情况把 EC 重构命令放入第一个 target 的队列。
 
-若剩余 pending entry 超时，则 `NumTimedOutPendingReconstructions` 增加 1；一次 entry 超时并不按 targets 数累加。如果 FBR 已经证明 B 的实际副本足够，重新评估后不会再次入队；如果仍然不足，才重新安排工作。迟到的原任务仍可能成功，多出的 replica 再进入 excess/invalidation 分支。
+源码：[DatanodeManager.java:1853](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/DatanodeManager.java#L1853-L1920)、[ErasureCodingWork.java:138](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/ErasureCodingWork.java#L138-L177)。
 
-## 6. 指标、配置与排障速查
+### 4.2 普通复制的数据路径
 
-### 6.1 先看指标的主体和时间口径
+`BPOfferService.processCommandFromActive()` 收到 `DNA_TRANSFER` 后调用 `DataNode.transferBlocks()`。每个 block 由 `DataTransfer` 线程读取 source 本地 replica，连接第一个 target；后续 targets 通过 pipeline 接收数据。
+
+![普通复制：NameNode 把命令返回给 source，source 经 pipeline 复制到 targets，targets 分别向 NameNode 报告](../../assets/images/hdfs-block-reconstruction/reconstruction-replication.svg)
+
+图中实线表示 block 数据，虚线表示 heartbeat 命令或副本报告。EC internal block 直接复制也走此路径，传输对象是已有的 internal block。
+
+源码：[BPOfferService.java:729](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/BPOfferService.java#L729-L733)、[DataNode.java:2895](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/DataNode.java#L2895-L2907)。
+
+### 4.3 EC 任务与读写初始化
+
+收到 EC 命令后，`ErasureCodingWorker.processErasureCodingTasks()` 将 block group、EC policy、source/index 对应关系、targets 及 storage 信息封装为 `StripedReconstructionInfo`，构造 `StripedBlockReconstructor`。存在有效目标时，任务提交到 `stripedReconstructionPool`。
+
+任务提交后即增加加权的 `xmitsInProgress`，排队中的 EC 工作也计入负载。权重基于最少输入数与 target 数的较大值计算，最小贡献为 1；该值供后续 heartbeat 分配预算使用。
+
+`StripedBlockReconstructor.run()` 依次初始化 decoder、可选的解码校验器、reader 和 writer，再进入重构循环。两类初始化承担不同职责：
+
+- **`StripedReader.init()`：** 建立足够数量的 source readers，从 reader 获取 checksum 参数，将读 buffer 大小对齐到 checksum chunk。短 block group 中长度为零的数据块使用零填充输入，因此最少实际输入数可能小于 policy 的 k。
+- **`StripedWriter`：** 构造时根据 live/excluded indices 和 internal block 长度确定待恢复 indices，计算 `maxTargetLength`；`init()` 再准备 packet/checksum buffers，为每个 target 建立写连接。每个 writer 对应一个 internal block。
+
+输入数组的下标是 internal block index；source 列表位置通过 `liveIndices` 映射到这个下标。输出 indices 则由 writer 根据缺失位置生成，与 targets 按顺序对应。
+
+源码：[ErasureCodingWorker.java:106](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/ErasureCodingWorker.java#L106-L157)、[StripedReader.java:88](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/StripedReader.java#L88-L212)、[StripedWriter.java:68](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/StripedWriter.java#L68-L142)。
+
+### 4.4 并行读取、解码与写入
+
+coordinator 在一个重构任务线程中推进循环，source 读取交给独立的 `stripedReadPool`，通过 `ExecutorCompletionService` 收集结果。解码和输出发送回到重构任务线程执行。
+
+![EC 数据流：sources 并行提供输入，第一个 target 上的 coordinator 执行解码，再分别写入 targets](../../assets/images/hdfs-block-reconstruction/reconstruction-ec.svg)
+
+每轮长度为 `min(bufferSize, maxTargetLength - positionInBlock)`。以下为执行顺序的伪代码：
+
+```text
+while positionInBlock < maxTargetLength:
+    length = min(bufferSize, maxTargetLength - positionInBlock)
+    readMinimumSources(length)
+    inputs = getInputBuffers(length)
+    outputs = decode(inputs, activeTargetIndices)
+    按各 target 的剩余长度截断 outputs
+    transferData2Targets()
+    positionInBlock += length
+    clearBuffers()
+```
+
+**读取。** `readMinimumSources()` 优先使用上一轮的 `successList`。某个读取失败时关闭对应 reader，并从其余来源补读；等待超时也会尝试其他来源。凑齐最少输入后，取消尚未完成的读取 Future，并清理本轮 completion 结果。无法取得足够输入则抛出 `IOException`；检测到的 corrupt block 会向 NameNode 报告。
+
+**解码。** `getInputBuffers()` 按 index 放置成功读取的 buffers，对短输入补零，未提供的输入保持为空。decoder 按 writer 给出的 `erasedIndices` 生成输出。开启解码校验时，输出还经过 `DecodingValidator`，校验失败会终止本次任务。
+
+**写入。** `StripedBlockWriter` 为输出计算 checksum 并组装 `DFSPacket`，通过独立连接发送到对应 target。不同 internal blocks 的长度可能不同，已到末尾的 target 不再发送本轮数据。读写两侧还分别执行配置的 reconstruction throttler。
+
+源码：[ErasureCodingWorker.java:75](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/ErasureCodingWorker.java#L75-L113)、[StripedReader.java:221](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/StripedReader.java#L221-L351)、[StripedBlockReconstructor.java:90](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/StripedBlockReconstructor.java#L90-L174)、[StripedBlockWriter.java:164](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/StripedBlockWriter.java#L164-L215)。
+
+### 4.5 部分失败与任务结束
+
+`StripedWriter` 用 `targetsStatus` 记录各 target 是否仍可写。连接或传输失败的 target 被排除，后续只为剩余 targets 解码和发送；所有 targets 失败时，初始化或重构循环抛出异常。这允许一个任务只完成部分 internal blocks。
+
+循环结束后，`endTargetBlocks()` 向仍有效的 targets 发送结束 packet。此路径不逐包等待 ACK，因此任务线程返回不能代替 NameNode 收到副本报告。未得到报告的 targets 由 pending 超时路径继续处理。
+
+`run()` 捕获失败并更新任务指标，在 `finally` 中减回加权传输计数、关闭 reader/writer、归还其持有的 buffers，并释放 decoder。source 读失败时的补读发生在 DataNode 内部；pending 超时后的重新调度发生在 NameNode，两者的处理范围不同。
+
+源码：[StripedWriter.java:147](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/StripedWriter.java#L147-L195)、[StripedWriter.java:310](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/StripedWriter.java#L310-L325)、[StripedBlockReconstructor.java:53](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/StripedBlockReconstructor.java#L53-L86)、[StripedReconstructor.java:295](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/datanode/erasurecode/StripedReconstructor.java#L295-L299)。
+
+以完整 RS-6-3 group 为例：丢失 index 2 后仍有 8 个不同 indices。coordinator 正常情况下读取其中 6 个输入，在每轮 buffer 上恢复 index 2，再写入对应 target；多出的来源供失败或慢读时替换。若只剩 5 个独立输入，且退出服务的节点上也没有可用来源，该 group 会进入 corrupt queue，增加 targets 或调度预算无法补足解码输入。
+
+## 5. 报告确认、超时与延迟处理
+
+### 5.1 Pending 登记与报告确认
+
+`PendingReconstructionBlocks` 内部为 `Map<BlockInfo, PendingBlockInfo>`，value 保存 target storage 列表和时间戳。`increment()` 首次建立条目；追加 targets 时去重并刷新整个条目的时间戳。
+
+除了后台重构，写入收尾也会通过 `addExpectedReplicasToPending()` 登记尚未报告的预期副本。EC 的这一入口还要求 expected storages 数量等于 `getRealTotalBlockNum()`。
+
+![IBR 确认路径：核对 block 和 generation stamp，减少 pending，再按报告处理副本及冗余需求](../../assets/images/hdfs-block-reconstruction/reconstruction-report.svg)
+
+处理 `RECEIVED_BLOCK` 时，`BlockManager.addBlock()` 先查找当前 block 并核对 generation stamp，再调用 `pendingReconstruction.decrement()`；该方法按报告所属 DataNode 移除 target 记录，列表为空则删除 map 条目。随后报告处理更新存储关联，并按当前冗余维护 needed 和额外副本。
+
+FBR 也能更新实际副本关联，但不直接执行此处的 pending decrement。若 IBR 丢失，pending 可一直保留到超时，届时再依据 FBR 已更新的事实判断是否仍需重构。
+
+源码：[PendingReconstructionBlocks.java:92](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/PendingReconstructionBlocks.java#L92-L129)、[PendingReconstructionBlocks.java:227](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/PendingReconstructionBlocks.java#L227-L246)、[BlockManager.java:1252](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L1252-L1274)、[BlockManager.java:4510](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L4510-L4540)。
+
+普通 block B 的目标副本数为 3，DN2、DN3 失效后只剩 DN1。假设 placement 正常，调度一次找到 DN4、DN5，容器变化如下：
+
+<div class="overflow-x-auto [&_table]:min-w-[38rem]" role="region" aria-label="block B 的报告与计数变化" tabindex="0">
+
+| 事件                 | live | pending targets | needed 条目 | pending 条目 |
+| -------------------- | ---- | --------------- | ----------- | ------------ |
+| 已处理 DN2、DN3 丢失 | 1    | 无              | 1           | 0            |
+| 安排 DN4、DN5        | 1    | DN4、DN5        | 0           | 1            |
+| 接受 DN4 的 IBR      | 2    | DN5             | 0           | 1            |
+| 接受 DN5 的 IBR      | 3    | 无              | 0           | 0            |
+
+</div>
+
+这次调度贡献 1 个 work、2 个 pending targets 和 1 个 pending 条目。若只找到 DN4，则 needed 与 pending 条目均为 1，B 同时存在于两个容器中。
+
+### 5.2 Pending 超时与重新调度
+
+独立的 `PendingReconstructionMonitor` 扫描 pending map。条目的等待时间超过 timeout 后，将 block 加入 `timedOutItems` 并移出 pending；扫描间隔取默认检查间隔与 timeout 的较小值。
+
+![超时处理：超时线程移出 pending，RedundancyMonitor 消费 timedOutItems 并复查需求；原任务仍可能完成](../../assets/images/hdfs-block-reconstruction/reconstruction-timeout.svg)
+
+`RedundancyMonitor.processPendingReconstructions()` 消费超时列表，在写锁下从 `BlocksMap` 查找当前 `BlockInfo`，跳过已删除 block，再统计副本、判断是否重新加入 needed。由于本轮 `computeDatanodeWork()` 在前，新加入的需求通常要等后续轮次调度。
+
+超时处理不向 DataNode 发送取消命令。原任务可能仍在执行，新的 work 也可能已被安排；迟到报告按当前 block 事实处理，多出的副本进入额外冗余处理。若报告已证明副本足够，超时复查便不会重新加入 needed。
+
+源码：[PendingReconstructionBlocks.java:260](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/PendingReconstructionBlocks.java#L260-L303)、[BlockManager.java:2680](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L2680-L2707)。
+
+### 5.3 Postponed 重扫与 failover
+
+failover 后，新 Active 看到的 storage 清单可能尚未反映旧 Active 下发的删除。如果立即按旧清单继续选择 excess replica，可能造成过度删除。`postponedMisreplicatedBlocks` 暂存这类无法安全处理的 block；corrupt replica 的删除也可能因其他 storage 信息 stale 而被推迟。
+
+`DatanodeStorageInfo.markStaleAfterFailover()` 将块清单标为 stale。收到 heartbeat 只设置 `heartbeatedSinceFailover`；其后的 `receivedBlockReport()` 才清除 `blockContentsStale`。
+
+![Postponed 重扫：限量取出并先移除条目，按当前 BlockInfo 分类，仅 POSTPONE 结果重新加入集合](../../assets/images/hdfs-block-reconstruction/reconstruction-postponed.svg)
+
+`rescanPostponedMisreplicatedBlocks()` 在写锁下限量取出条目，并先从集合移除。取得当前 `BlockInfo` 后调用 `processMisReplicatedBlock()`；仍返回 `POSTPONE` 的条目暂存到重扫集合，在本轮结束时加回。其他结果由分类路径处理，可能加入 needed、安排删除，或无需进一步操作。
+
+needed、pending 和 postponed 都是内存记录。NameNode 重启或角色切换后的冗余维护依靠 namespace、block reports 和队列初始化重新建立当前需求，不能依赖旧调度记录继续执行。
+
+源码：[DatanodeStorageInfo.java:184](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/DatanodeStorageInfo.java#L184-L200)、[BlockManager.java:3025](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L3025-L3064)。
+
+## 附录：指标与配置
+
+### A. 指标口径
 
 下表使用 Hadoop 3.4.1 `FSNamesystem` 暴露的名称。`BlockManager.updateState()` 将 needed/pending 大小复制到指标字段，因此监控值不是每次容器增删的即时回读。一次抓取中的多个指标也不构成跨容器的原子快照。
 
 <div class="overflow-x-auto [&_table]:min-w-[48rem]" role="region" aria-label="重构指标速查（窄屏可横向滚动）" tabindex="0">
 
-| 指标                                | 主体与计数口径                                                                                          | 读数含义                                                                                         |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `LowRedundancyBlocks`               | `neededReconstruction.size()` 的快照；当前 block/group 条目数，五个优先级集合求和                       | 包括数量不足、placement 不满足及 corrupt queue；不是缺少的 replica 数                            |
-| `LowRedundancyReplicatedBlocks`     | needed 中普通 block 的分类计数，排除 corrupt queue；当前普通 block 数                                   | 与总量 `LowRedundancyBlocks` 口径不同                                                            |
-| `LowRedundancyECBlockGroups`        | needed 中 EC group 的分类计数，排除 corrupt queue；当前 block group 数                                  | 一个 group 缺多个 internal blocks 仍计 1                                                         |
-| `PendingReconstructionBlocks`       | `pendingReconstruction.size()` 的快照；当前 block/group key 数                                          | 一个 key 下多个 targets 仍计 1；包含尚未领取命令的工作                                           |
-| `ScheduledReplicationBlocks`        | 最近一次更新该值的调度轮次返回的 `scheduledWork`；每轮安排成功的 work 数，普通 block 与 EC group 都包含 | 不是累计完成数，也不是当前传输并发；一项 work 可有多个 targets                                   |
-| `NumTimedOutPendingReconstructions` | `timedOutCount + timedOutItems.size()`；当前进程内累计 pending entry 超时次数                           | 同一 block 重复超时会重复计数；看时间段增量，重启后基线重置                                      |
-| `PostponedMisreplicatedBlocks`      | `postponedMisreplicatedBlocks.size()`；当前待重扫的 block 条目数                                        | 常见原因是 stale 信息阻碍安全删除，不代表复制带宽不足                                            |
-| `ReconstructionQueuesInitProgress`  | 初始化扫描的 processed / 初始 total，最大为 1；0–1 的扫描进度                                           | 不是修复完成率；空 namespace 不能仅靠该值判断初始化是否完成                                      |
-| `ExcessBlocks`                      | `excessRedundancyMap.size()`；当前按 DataNode 记录的 excess 条目数                                      | 同一逻辑 block 在不同节点上的记录分别计数，不能当作唯一 block 数                                 |
-| `PendingDeletionBlocks`             | `invalidateBlocks.numBlocks()`；当前 invalidation 容器中的删除条目数                                    | 普通 replica 与 EC internal block 删除条目之和；移入节点命令队列时就可下降，不代表已删除落盘数据 |
+| 指标                                | 主体与计数口径                                                                                          | 读数含义                                                                                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `LowRedundancyBlocks`               | `neededReconstruction.size()` 的快照；当前 block/group 条目数，五个优先级集合求和                       | 包括数量不足、placement 不满足及 corrupt queue；不是缺少的 replica 数                                  |
+| `LowRedundancyReplicatedBlocks`     | needed 中普通 block 的分类计数，排除 corrupt queue；当前普通 block 数                                   | 与总量 `LowRedundancyBlocks` 口径不同                                                                  |
+| `LowRedundancyECBlockGroups`        | needed 中 EC group 的分类计数，排除 corrupt queue；当前 block group 数                                  | 一个 group 缺多个 internal blocks 仍计 1                                                               |
+| `PendingReconstructionBlocks`       | `pendingReconstruction.size()` 的快照；当前 block/group key 数                                          | 一个 key 下多个 targets 仍计 1；既包含后台重构 targets，也包含写入收尾等待 IBR 的预期副本              |
+| `ScheduledReplicationBlocks`        | 最近一次更新该值的调度轮次返回的 `scheduledWork`；每轮安排成功的 work 数，普通 block 与 EC group 都包含 | 不是累计完成数，也不是当前传输并发；一项 work 可有多个 targets                                         |
+| `NumTimedOutPendingReconstructions` | `timedOutCount + timedOutItems.size()`；自启动或 clear() 后累计 pending entry 超时次数                  | 同一 block 重复超时会重复计数；看时间段增量，clear() 或重启后基线重置                                  |
+| `PostponedMisreplicatedBlocks`      | `postponedMisreplicatedBlocks.size()`；当前待重扫的 block 条目数                                        | 常见原因是 stale 信息阻碍安全删除，不代表复制带宽不足                                                  |
+| `ReconstructionQueuesInitProgress`  | 初始化扫描的 processed / 初始 total，最大为 1；0–1 的扫描进度                                           | 不是修复完成率；空 namespace 不能仅靠该值判断初始化是否完成                                            |
+| `ExcessBlocks`                      | `excessRedundancyMap.size()`；当前按 DataNode 记录的 excess 条目数                                      | 同一逻辑 block 在不同节点上的记录分别计数，不能当作唯一 block 数                                       |
+| `PendingDeletionBlocks`             | `invalidateBlocks.numBlocks()`；当前 invalidation 容器中的删除条目数                                    | 普通 block 删除条目与 EC internal block 删除条目之和；移入节点命令队列时就可下降，不代表已删除落盘数据 |
 
 </div>
 
 源码入口：[指标 getter](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/namenode/FSNamesystem.java#L5417-L5588)、[updateState()](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L2057-L2061)、[每轮 scheduledWork](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L5381-L5407)、[超时累计](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/PendingReconstructionBlocks.java#L174-L199)、[invalidation 队列转移](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/InvalidateBlocks.java#L260-L298)。
 
-### 6.2 Corrupt、Missing 与删除计数
+### B. Corrupt、Missing 与删除计数
 
 除 needed/pending/postponed 外，`BlockManager` 还维护以下主体：
 
@@ -625,7 +392,7 @@ if (now > pending.timestamp + timeout) {
 
 源码见 [CorruptReplicasMap](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/CorruptReplicasMap.java)、[LowRedundancyBlocks 分类及计数](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/LowRedundancyBlocks.java#L124-L284)、[ExcessRedundancyMap](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/ExcessRedundancyMap.java#L41-L90)。
 
-### 6.3 配置分别约束哪个阶段
+### C. 配置作用范围
 
 <div class="overflow-x-auto [&_table]:min-w-[48rem]" role="region" aria-label="重构配置速查（窄屏可横向滚动）" tabindex="0">
 
@@ -643,23 +410,19 @@ if (now > pending.timestamp + timeout) {
 
 默认值与语义见 [hdfs-default.xml](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/resources/hdfs-default.xml)。这些参数分别约束候选选择、source 压力、等待和重扫，不能互相替代。
 
-### 6.4 从趋势定位卡住的环节
+### D. 排障组合
 
 <div class="overflow-x-auto [&_table]:min-w-[48rem]" role="region" aria-label="排障指标组合（窄屏可横向滚动）" tabindex="0">
 
 | 观察组合                                 | 优先核查                                                                            | 不能直接推出什么                        |
 | ---------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------- |
 | LowRedundancy 上升，Scheduled 长期接近 0 | Active / SafeMode 与初始化状态，source/target 可选性，限流、placement，Missing 分类 | 不能仅凭 backlog 推断 DataNode 带宽不足 |
-| Pending 长期高位，超时累计值持续增加     | 命令领取延迟、DataNode 排队与传输错误、IBR 反馈                                     | Pending 高不证明所有任务已经开始执行    |
+| Pending 长期高位，超时累计值持续增加     | 区分重构与写入收尾来源，再查命令领取延迟、DataNode 执行及 IBR 反馈                  | Pending 高不证明所有任务已经开始执行    |
 | Postponed 长时间不下降                   | storage report 新鲜度、failover 后重扫与删除判断                                    | 增加复制并发未必有用                    |
 | LowRedundancy 下降，Excess 上升          | 是否有超时重试、迟到任务、恢复上线的旧副本或 replication factor 变更                | 不能单凭两个趋势确定出现重复任务        |
 | EC 工作持续安排，但完成慢                | coordinator 的 read、decode、write 耗时及负载                                       | NameNode 的 work multiplier 未必是瓶颈  |
 
 </div>
-
-调优应沿着“需求 → 安排 → 领取 → 数据传输 → 报告”定位。先明确每个指标的主体和单位，再讨论提高哪个阶段的能力；source limit 提高会增加磁盘读、网络与 target 写压力，不能仅由 needed 大小决定。
-
-文章的核心关系可以记为：**needed 记录需求，pending 记录尝试，reports 校正存储事实，postponed 等待安全判断。** `RedundancyMonitor` 推进这些记录，但新副本是否存在，最终仍需回到 DataNode 的实际存储与报告。
 
 ## 参考资料
 

@@ -1,0 +1,188 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="480"
+  height="626"
+  viewBox="0 0 480 626"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">04b Pending 超时</title>
+  <desc id="desc">
+    PendingReconstructionMonitor 检测超时并移出 pending，RedundancyMonitor 消费
+    timedOutItems，当前仍需重构才加入 needed；不取消远端任务。
+  </desc>
+  <defs>
+    <marker
+      id="head"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path
+        d="M 0 1 L 9 5 L 0 9"
+        fill="none"
+        stroke="#334155"
+        stroke-width="1.5"
+      />
+    </marker>
+  </defs>
+  <rect width="480" height="626" fill="white" />
+  <text
+    x="24"
+    y="44"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="24"
+    font-weight="600"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">04b Pending 超时</tspan>
+  </text>
+  <rect
+    x="16"
+    y="65"
+    width="448"
+    height="165"
+    rx="5"
+    fill="#f6f7f9"
+    stroke="#a3adba"
+    stroke-width="1.5"
+  />
+  <text
+    x="30"
+    y="95"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="30" dy="0">PendingReconstructionMonitor</tspan>
+  </text>
+  <rect
+    x="40"
+    y="111"
+    width="400"
+    height="94"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="151.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">超过等待阈值</tspan>
+    <tspan x="240.0" dy="28">移出 pending，加入 timedOutItems</tspan>
+  </text>
+  <path
+    d="M 240 230 L 240 289"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <rect
+    x="16"
+    y="289"
+    width="448"
+    height="232"
+    rx="5"
+    fill="#f6f7f9"
+    stroke="#a3adba"
+    stroke-width="1.5"
+  />
+  <text
+    x="30"
+    y="319"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="30" dy="0">RedundancyMonitor</tspan>
+  </text>
+  <rect
+    x="40"
+    y="335"
+    width="400"
+    height="84"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="370.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">processPendingReconstructions()</tspan>
+    <tspan x="240.0" dy="28">查找当前 block，重新统计副本</tspan>
+  </text>
+  <path
+    d="M 240 419 L 240 467"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="449.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">仍需重构</tspan>
+  </text>
+  <rect
+    x="40"
+    y="467"
+    width="400"
+    height="40"
+    rx="5"
+    fill="#edf3ff"
+    stroke="#4168b0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="494.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">加入 neededReconstruction</tspan>
+  </text>
+  <text
+    x="24"
+    y="568"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">超时不取消原 DataNode 任务</tspan>
+    <tspan x="24" dy="28">迟到报告可能带来额外副本</tspan>
+  </text>
+</svg>
