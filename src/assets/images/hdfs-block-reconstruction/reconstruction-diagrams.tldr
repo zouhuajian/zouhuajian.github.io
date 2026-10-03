@@ -1,0 +1,5070 @@
+{
+  "tldrawFileFormatVersion": 1,
+  "schema": {
+    "schemaVersion": 2,
+    "sequences": {
+      "com.tldraw.store": 5,
+      "com.tldraw.asset": 1,
+      "com.tldraw.camera": 1,
+      "com.tldraw.document": 2,
+      "com.tldraw.instance": 26,
+      "com.tldraw.instance_page_state": 5,
+      "com.tldraw.page": 1,
+      "com.tldraw.instance_presence": 6,
+      "com.tldraw.pointer": 1,
+      "com.tldraw.shape": 4,
+      "com.tldraw.user": 1,
+      "com.tldraw.asset.image": 6,
+      "com.tldraw.asset.video": 5,
+      "com.tldraw.asset.bookmark": 2,
+      "com.tldraw.shape.group": 0,
+      "com.tldraw.shape.text": 4,
+      "com.tldraw.shape.bookmark": 2,
+      "com.tldraw.shape.draw": 5,
+      "com.tldraw.shape.geo": 12,
+      "com.tldraw.shape.note": 13,
+      "com.tldraw.shape.line": 5,
+      "com.tldraw.shape.frame": 1,
+      "com.tldraw.shape.arrow": 8,
+      "com.tldraw.shape.highlight": 4,
+      "com.tldraw.shape.embed": 4,
+      "com.tldraw.shape.image": 5,
+      "com.tldraw.shape.video": 4,
+      "com.tldraw.binding.arrow": 1,
+      "com.tldraw.comment-thread": 3,
+      "com.tldraw.comment": 1,
+      "com.tldraw.comment-reaction": 1
+    }
+  },
+  "records": [
+    {
+      "gridSize": 10,
+      "name": "HDFS Reconstruction · Hadoop 3.4.1",
+      "meta": {},
+      "id": "document:document",
+      "typeName": "document"
+    },
+    {
+      "meta": {},
+      "id": "page:reconstruction-architecture-spaced",
+      "name": "01  重构流程",
+      "index": "a1",
+      "typeName": "page"
+    },
+    {
+      "x": 24,
+      "y": 20,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-1",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "m",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "01  重构流程"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "a1",
+      "typeName": "shape"
+    },
+    {
+      "x": 16,
+      "y": 66,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-2",
+      "type": "geo",
+      "props": {
+        "w": 448,
+        "h": 290,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "grey",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "a2",
+      "typeName": "shape"
+    },
+    {
+      "x": 30,
+      "y": 76,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-3",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "NameNode · BlockManager"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "a3",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 112,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-4",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 84,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "a4",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 127.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-5",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "统计副本与 placement"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "更新 neededReconstruction"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "a5",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 196,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-6",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 42
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "a6",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 238,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-7",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 100,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "a7",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 247.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-8",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "RedundancyMonitor"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "选择工作 → 验证 → 入队"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "登记 pending targets"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "a8",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 356,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-9",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "dashed",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 65
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "a9",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 374.5,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-10",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "heartbeat 响应"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "aA",
+      "typeName": "shape"
+    },
+    {
+      "x": 16,
+      "y": 421,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-11",
+      "type": "geo",
+      "props": {
+        "w": 448,
+        "h": 147,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "grey",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "aB",
+      "typeName": "shape"
+    },
+    {
+      "x": 30,
+      "y": 431,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-12",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "执行任务的 DataNode"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "aC",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 470,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-13",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 80,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "aD",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 483.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-14",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "复制已有 block"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "或读取 sources、解码并写 targets"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "aE",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 568,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-15",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "dashed",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 64
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "aF",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 586.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-16",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "副本报告"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "aG",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 632,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-17",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 82,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "aH",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 646.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-18",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "NameNode 处理报告"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "更新副本事实与冗余需求"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "aI",
+      "typeName": "shape"
+    },
+    {
+      "x": 24,
+      "y": 733,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-architecture-spaced-19",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 432,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "信息不足时暂缓删除 → postponed"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-architecture-spaced",
+      "index": "aJ",
+      "typeName": "shape"
+    },
+    {
+      "meta": {},
+      "id": "page:reconstruction-scheduling-spaced",
+      "name": "02  三阶段调度与写锁",
+      "index": "a2",
+      "typeName": "page"
+    },
+    {
+      "x": 24,
+      "y": 20,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-1",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "m",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "02  三阶段调度与写锁"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "a1",
+      "typeName": "shape"
+    },
+    {
+      "x": 16,
+      "y": 64,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-2",
+      "type": "geo",
+      "props": {
+        "w": 448,
+        "h": 157,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "grey",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "a2",
+      "typeName": "shape"
+    },
+    {
+      "x": 30,
+      "y": 74,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-3",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "① 持有 FSNamesystem 写锁"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "a3",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 110,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-4",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 92,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "a4",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 129.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-5",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "scheduleReconstruction()"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "统计副本、选择 sources、构造 work"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "a5",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 221,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-6",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 57
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "a6",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 235.5,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-7",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "释放锁"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "a7",
+      "typeName": "shape"
+    },
+    {
+      "x": 16,
+      "y": 278,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-8",
+      "type": "geo",
+      "props": {
+        "w": 448,
+        "h": 232,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "grey",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "a8",
+      "typeName": "shape"
+    },
+    {
+      "x": 30,
+      "y": 288,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-9",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "② 不持有全局写锁"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "a9",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 325,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-10",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 82,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aA",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 339.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-11",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "chooseTargets()"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "按 placement policy 选择 storages"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aB",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 429,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-12",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 400,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "并发事件示例：收到新的 IBR"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "副本可能已补齐，原需求随之消失"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aC",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 510,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-13",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 58
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aD",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 525.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-14",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "重新加锁"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aE",
+      "typeName": "shape"
+    },
+    {
+      "x": 16,
+      "y": 568,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-15",
+      "type": "geo",
+      "props": {
+        "w": 448,
+        "h": 280,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "grey",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aF",
+      "typeName": "shape"
+    },
+    {
+      "x": 30,
+      "y": 578,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-16",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "③ 持有 FSNamesystem 写锁"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aG",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 615,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-17",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 82,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aH",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 629.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-18",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "validateReconstructionWork()"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "复查 block、live + pending、placement"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aI",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 697,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-19",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 44
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aJ",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 705.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-20",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "通过"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aK",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 741,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-21",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 86,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aL",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 757.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-22",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "任务入队 → 登记 pending"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "数量满足时移出 needed"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aM",
+      "typeName": "shape"
+    },
+    {
+      "x": 24,
+      "y": 870,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-scheduling-spaced-23",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 432,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "无 target：跳过本轮 work"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "需求已消失：移出 needed"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "placement 未改善：保留需求，跳过"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-scheduling-spaced",
+      "index": "aN",
+      "typeName": "shape"
+    },
+    {
+      "meta": {},
+      "id": "page:reconstruction-replication",
+      "name": "03a  普通复制的数据方向",
+      "index": "a3",
+      "typeName": "page"
+    },
+    {
+      "x": 24,
+      "y": 20,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-1",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "m",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "03a  普通复制的数据方向"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "a1",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 70,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-2",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 80,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "a2",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 83.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-3",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "NameNode"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "source 描述对象中的复制任务"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "a3",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 150,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-4",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "dashed",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 61
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "a4",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 166.5,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-5",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "heartbeat 响应"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "a5",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 211,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-6",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 82,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "a6",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 225.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-7",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "DN1 · source"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "DataTransfer 读取本地 replica"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "a7",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 293,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-8",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 57
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "a8",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 307.5,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-9",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "block 数据"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "a9",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 350,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-10",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 58,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aA",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 366.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-11",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "DN4 · 第一个 target"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aB",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 408,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-12",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 57
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aC",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 422.5,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-13",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "pipeline 数据"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aD",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 465,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-14",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 58,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aE",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 481.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-15",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "DN5 · 后续 target"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aF",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 380,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-16",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "dashed",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": -20,
+          "y": 0
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "none",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aG",
+      "typeName": "shape"
+    },
+    {
+      "x": 20,
+      "y": 380,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-17",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "dashed",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 202
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "none",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aH",
+      "typeName": "shape"
+    },
+    {
+      "x": 20,
+      "y": 582,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-18",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "dashed",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 145,
+          "y": 0
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aI",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 523,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-19",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "dashed",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 21
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aJ",
+      "typeName": "shape"
+    },
+    {
+      "x": 165,
+      "y": 544,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-20",
+      "type": "geo",
+      "props": {
+        "w": 275,
+        "h": 80,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aK",
+      "typeName": "shape"
+    },
+    {
+      "x": 175,
+      "y": 557.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-21",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 255,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "NameNode"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "接收各 target 的 IBR"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aL",
+      "typeName": "shape"
+    },
+    {
+      "x": 24,
+      "y": 646,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-replication-22",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 432,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "实线：数据　虚线：命令 / 报告"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-replication",
+      "index": "aM",
+      "typeName": "shape"
+    },
+    {
+      "meta": {},
+      "id": "page:reconstruction-ec",
+      "name": "03b  EC 解码的数据方向",
+      "index": "a4",
+      "typeName": "page"
+    },
+    {
+      "x": 24,
+      "y": 20,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-1",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "m",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "03b  EC 解码的数据方向"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "a1",
+      "typeName": "shape"
+    },
+    {
+      "x": 24,
+      "y": 59,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-2",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 432,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "EC 命令由第一个 target 领取"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "a2",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 111,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-3",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 80,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "a3",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 124.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-4",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "source DataNodes"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "不同 internal block indices"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "a4",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 191,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-5",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 55
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "a5",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 204.5,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-6",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "输入数据"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "a6",
+      "typeName": "shape"
+    },
+    {
+      "x": 16,
+      "y": 246,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-7",
+      "type": "geo",
+      "props": {
+        "w": 448,
+        "h": 260,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "grey",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "a7",
+      "typeName": "shape"
+    },
+    {
+      "x": 30,
+      "y": 256,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-8",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "第一个 target · coordinator DataNode"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "a8",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 293,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-9",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 78,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "a9",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 305.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-10",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "stripedReadPool 并行读取"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "CompletionService 收集结果"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "aA",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 371,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-11",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 46
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "aB",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 417,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-12",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 70,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "aC",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 425.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-13",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "重构任务线程"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "decoder → StripedWriter"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "aD",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 506,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-14",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 61
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "aE",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 522.5,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-15",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "输出数据"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "aF",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 567,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-16",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 84,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "aG",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 582.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-17",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "分别写入目标 storages"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "包含 coordinator 所在 DataNode"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "aH",
+      "typeName": "shape"
+    },
+    {
+      "x": 24,
+      "y": 680,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-ec-18",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 432,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "各 target 完成后"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "分别向 NameNode 发送 IBR"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-ec",
+      "index": "aI",
+      "typeName": "shape"
+    },
+    {
+      "meta": {},
+      "id": "page:reconstruction-report",
+      "name": "04a  IBR 确认",
+      "index": "a5",
+      "typeName": "page"
+    },
+    {
+      "x": 24,
+      "y": 20,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-1",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "m",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "04a  IBR 确认"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "a1",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 70,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-2",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 82,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "a2",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 84.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-3",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "RECEIVED_BLOCK"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "查找 block，核对 generation stamp"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "a3",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 152,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-4",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 52
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "a4",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 164.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-5",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "匹配"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "a5",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 204,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-6",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 104,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "a6",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 215.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-7",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "pending.decrement()"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "按 DataNode 移除 target"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "列表为空则删除条目"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "a7",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 308,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-8",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 52
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "a8",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 360,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-9",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 84,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "a9",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 375.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-10",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "继续处理副本报告"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "更新存储关联、needed 与额外冗余"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "aA",
+      "typeName": "shape"
+    },
+    {
+      "x": 24,
+      "y": 470,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-report-11",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 432,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "FBR 更新副本关联，不直接 decrement。"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-report",
+      "index": "aB",
+      "typeName": "shape"
+    },
+    {
+      "meta": {},
+      "id": "page:reconstruction-timeout",
+      "name": "04b  Pending 超时",
+      "index": "a6",
+      "typeName": "page"
+    },
+    {
+      "x": 24,
+      "y": 20,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-1",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "m",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "04b  Pending 超时"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "a1",
+      "typeName": "shape"
+    },
+    {
+      "x": 16,
+      "y": 65,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-2",
+      "type": "geo",
+      "props": {
+        "w": 448,
+        "h": 165,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "grey",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "a2",
+      "typeName": "shape"
+    },
+    {
+      "x": 30,
+      "y": 75,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-3",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "PendingReconstructionMonitor"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "a3",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 111,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-4",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 94,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "a4",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 131.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-5",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "超过等待阈值"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "移出 pending，加入 timedOutItems"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "a5",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 230,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-6",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 59
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "a6",
+      "typeName": "shape"
+    },
+    {
+      "x": 16,
+      "y": 289,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-7",
+      "type": "geo",
+      "props": {
+        "w": 448,
+        "h": 232,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "grey",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "a7",
+      "typeName": "shape"
+    },
+    {
+      "x": 30,
+      "y": 299,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-8",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "RedundancyMonitor"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "a8",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 335,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-9",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 84,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "a9",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 350.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-10",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "processPendingReconstructions()"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "查找当前 block，重新统计副本"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "aA",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 419,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-11",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 48
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "aB",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 429.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-12",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "仍需重构"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "aC",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 467,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-13",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 40,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "blue",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "aD",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 474.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-14",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "加入 neededReconstruction"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "aE",
+      "typeName": "shape"
+    },
+    {
+      "x": 24,
+      "y": 548,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-timeout-15",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 432,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "超时不取消原 DataNode 任务"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "迟到报告可能带来额外副本"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-timeout",
+      "index": "aF",
+      "typeName": "shape"
+    },
+    {
+      "meta": {},
+      "id": "page:reconstruction-postponed",
+      "name": "04c  Postponed 重扫",
+      "index": "a7",
+      "typeName": "page"
+    },
+    {
+      "x": 24,
+      "y": 20,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-1",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "m",
+        "w": 430,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "04c  Postponed 重扫"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "a1",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 70,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-2",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 80,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "orange",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "a2",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 83.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-3",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "postponedMisreplicatedBlocks"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "等待信息更新后再判断"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "a3",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 150,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-4",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 61
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "a4",
+      "typeName": "shape"
+    },
+    {
+      "x": 254,
+      "y": 166.5,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-5",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 210,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "限量取出"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "a5",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 211,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-6",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 84,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "a6",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 226.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-7",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "先移除条目，查找当前 BlockInfo"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "processMisReplicatedBlock()"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "a7",
+      "typeName": "shape"
+    },
+    {
+      "x": 240,
+      "y": 295,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-8",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 59
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "a8",
+      "typeName": "shape"
+    },
+    {
+      "x": 40,
+      "y": 354,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-9",
+      "type": "geo",
+      "props": {
+        "w": 400,
+        "h": 92,
+        "geo": "rectangle",
+        "dash": "solid",
+        "growY": 0,
+        "url": "",
+        "scale": 1,
+        "flipX": false,
+        "flipY": false,
+        "color": "violet",
+        "labelColor": "black",
+        "fill": "solid",
+        "size": "s",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "a9",
+      "typeName": "shape"
+    },
+    {
+      "x": 50,
+      "y": 373.0,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-10",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 380,
+        "font": "sans",
+        "textAlign": "middle",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "POSTPONE：本轮结束时加回"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "其余结果：重构、删除或无需处理"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "aA",
+      "typeName": "shape"
+    },
+    {
+      "x": 440,
+      "y": 383,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-11",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 19,
+          "y": 0
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "none",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "aB",
+      "typeName": "shape"
+    },
+    {
+      "x": 459,
+      "y": 383,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-12",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": -273
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "none",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "aC",
+      "typeName": "shape"
+    },
+    {
+      "x": 459,
+      "y": 110,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-13",
+      "type": "arrow",
+      "props": {
+        "kind": "arc",
+        "elbowMidPoint": 0.5,
+        "dash": "solid",
+        "size": "s",
+        "fill": "none",
+        "color": "black",
+        "labelColor": "black",
+        "bend": 0,
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": -19,
+          "y": 0
+        },
+        "arrowheadStart": "none",
+        "arrowheadEnd": "arrow",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph"
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "font": "sans",
+        "scale": 1
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "aD",
+      "typeName": "shape"
+    },
+    {
+      "x": 24,
+      "y": 479,
+      "rotation": 0,
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "id": "shape:reconstruction-postponed-14",
+      "type": "text",
+      "props": {
+        "color": "black",
+        "size": "s",
+        "w": 432,
+        "font": "sans",
+        "textAlign": "start",
+        "autoSize": false,
+        "scale": 1,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "执行线程：RedundancyMonitor"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "重扫期间持有 FSNamesystem 写锁"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parentId": "page:reconstruction-postponed",
+      "index": "aE",
+      "typeName": "shape"
+    }
+  ]
+}

@@ -1,0 +1,248 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="480"
+  height="685"
+  viewBox="0 0 480 685"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">03a 普通复制的数据方向</title>
+  <desc id="desc">
+    命令返回给 source，数据经 DN1 到 DN4 再到 DN5 的 pipeline 传输，targets
+    独立报告给 NameNode。
+  </desc>
+  <defs>
+    <marker
+      id="head"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path
+        d="M 0 1 L 9 5 L 0 9"
+        fill="none"
+        stroke="#334155"
+        stroke-width="1.5"
+      />
+    </marker>
+  </defs>
+  <rect width="480" height="685" fill="white" />
+  <text
+    x="24"
+    y="44"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="24"
+    font-weight="600"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">03a 普通复制的数据方向</tspan>
+  </text>
+  <rect
+    x="40"
+    y="70"
+    width="400"
+    height="80"
+    rx="5"
+    fill="#edf3ff"
+    stroke="#4168b0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="103.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">NameNode</tspan>
+    <tspan x="240.0" dy="28">source 描述对象中的复制任务</tspan>
+  </text>
+  <path
+    d="M 240 150 L 240 211"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    stroke-dasharray="6 5"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="186.5"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">heartbeat 响应</tspan>
+  </text>
+  <rect
+    x="40"
+    y="211"
+    width="400"
+    height="82"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="245.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">DN1 · source</tspan>
+    <tspan x="240.0" dy="28">DataTransfer 读取本地 replica</tspan>
+  </text>
+  <path
+    d="M 240 293 L 240 350"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="327.5"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">block 数据</tspan>
+  </text>
+  <rect
+    x="40"
+    y="350"
+    width="400"
+    height="58"
+    rx="5"
+    fill="#edf3ff"
+    stroke="#4168b0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="386.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">DN4 · 第一个 target</tspan>
+  </text>
+  <path
+    d="M 240 408 L 240 465"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="442.5"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">pipeline 数据</tspan>
+  </text>
+  <rect
+    x="40"
+    y="465"
+    width="400"
+    height="58"
+    rx="5"
+    fill="#edf3ff"
+    stroke="#4168b0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="501.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">DN5 · 后续 target</tspan>
+  </text>
+  <path
+    d="M 40 380 L 20 380"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    stroke-dasharray="6 5"
+  />
+  <path
+    d="M 20 380 L 20 582"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    stroke-dasharray="6 5"
+  />
+  <path
+    d="M 20 582 L 165 582"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    stroke-dasharray="6 5"
+    marker-end="url(#head)"
+  />
+  <path
+    d="M 240 523 L 240 544"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    stroke-dasharray="6 5"
+    marker-end="url(#head)"
+  />
+  <rect
+    x="165"
+    y="544"
+    width="275"
+    height="80"
+    rx="5"
+    fill="#edf3ff"
+    stroke="#4168b0"
+    stroke-width="1.5"
+  />
+  <text
+    x="302.5"
+    y="577.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="302.5" dy="0">NameNode</tspan>
+    <tspan x="302.5" dy="28">接收各 target 的 IBR</tspan>
+  </text>
+  <text
+    x="24"
+    y="666"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">实线：数据　虚线：命令 / 报告</tspan>
+  </text>
+</svg>

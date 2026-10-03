@@ -1,0 +1,147 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="480"
+  height="515"
+  viewBox="0 0 480 515"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">04a IBR 确认</title>
+  <desc id="desc">
+    BlockManager 处理 RECEIVED_BLOCK；匹配 block 和 generation stamp 后减
+    pending，随后按报告更新存储关联和冗余。
+  </desc>
+  <defs>
+    <marker
+      id="head"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path
+        d="M 0 1 L 9 5 L 0 9"
+        fill="none"
+        stroke="#334155"
+        stroke-width="1.5"
+      />
+    </marker>
+  </defs>
+  <rect width="480" height="515" fill="white" />
+  <text
+    x="24"
+    y="44"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="24"
+    font-weight="600"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">04a IBR 确认</tspan>
+  </text>
+  <rect
+    x="40"
+    y="70"
+    width="400"
+    height="82"
+    rx="5"
+    fill="#edf3ff"
+    stroke="#4168b0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="104.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">RECEIVED_BLOCK</tspan>
+    <tspan x="240.0" dy="28">查找 block，核对 generation stamp</tspan>
+  </text>
+  <path
+    d="M 240 152 L 240 204"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="184.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">匹配</tspan>
+  </text>
+  <rect
+    x="40"
+    y="204"
+    width="400"
+    height="104"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="235.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">pending.decrement()</tspan>
+    <tspan x="240.0" dy="28">按 DataNode 移除 target</tspan>
+    <tspan x="240.0" dy="28">列表为空则删除条目</tspan>
+  </text>
+  <path
+    d="M 240 308 L 240 360"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <rect
+    x="40"
+    y="360"
+    width="400"
+    height="84"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="395.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">继续处理副本报告</tspan>
+    <tspan x="240.0" dy="28">更新存储关联、needed 与额外冗余</tspan>
+  </text>
+  <text
+    x="24"
+    y="490"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">FBR 更新副本关联，不直接 decrement。</tspan>
+  </text>
+</svg>

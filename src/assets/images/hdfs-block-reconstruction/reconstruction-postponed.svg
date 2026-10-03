@@ -1,0 +1,166 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="480"
+  height="558"
+  viewBox="0 0 480 558"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">04c Postponed 重扫</title>
+  <desc id="desc">
+    RedundancyMonitor 限量移出 postponed 条目，按当前 BlockInfo
+    重新分类，POSTPONE 结果在批次结束后加回；其他结果按分类处理。
+  </desc>
+  <defs>
+    <marker
+      id="head"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path
+        d="M 0 1 L 9 5 L 0 9"
+        fill="none"
+        stroke="#334155"
+        stroke-width="1.5"
+      />
+    </marker>
+  </defs>
+  <rect width="480" height="558" fill="white" />
+  <text
+    x="24"
+    y="44"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="24"
+    font-weight="600"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">04c Postponed 重扫</tspan>
+  </text>
+  <rect
+    x="40"
+    y="70"
+    width="400"
+    height="80"
+    rx="5"
+    fill="#fff3df"
+    stroke="#b87820"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="103.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">postponedMisreplicatedBlocks</tspan>
+    <tspan x="240.0" dy="28">等待信息更新后再判断</tspan>
+  </text>
+  <path
+    d="M 240 150 L 240 211"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="186.5"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">限量取出</tspan>
+  </text>
+  <rect
+    x="40"
+    y="211"
+    width="400"
+    height="84"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="246.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">先移除条目，查找当前 BlockInfo</tspan>
+    <tspan x="240.0" dy="28">processMisReplicatedBlock()</tspan>
+  </text>
+  <path
+    d="M 240 295 L 240 354"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <rect
+    x="40"
+    y="354"
+    width="400"
+    height="92"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="393.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">POSTPONE：本轮结束时加回</tspan>
+    <tspan x="240.0" dy="28">其余结果：重构、删除或无需处理</tspan>
+  </text>
+  <path
+    d="M 440 383 L 459 383"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+  />
+  <path
+    d="M 459 383 L 459 110"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+  />
+  <path
+    d="M 459 110 L 440 110"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="24"
+    y="499"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">执行线程：RedundancyMonitor</tspan>
+    <tspan x="24" dy="28">重扫期间持有 FSNamesystem 写锁</tspan>
+  </text>
+</svg>

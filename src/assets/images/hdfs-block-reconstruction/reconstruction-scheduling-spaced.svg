@@ -1,0 +1,274 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="480"
+  height="977"
+  viewBox="0 0 480 977"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">02 三阶段调度与写锁</title>
+  <desc id="desc">
+    第一阶段持有写锁构造 work；第二阶段锁外选择 targets，期间可收到
+    IBR；第三阶段重新加锁复查并登记任务。
+  </desc>
+  <defs>
+    <marker
+      id="head"
+      viewBox="0 0 10 10"
+      refX="9"
+      refY="5"
+      markerWidth="7"
+      markerHeight="7"
+      orient="auto-start-reverse"
+    >
+      <path
+        d="M 0 1 L 9 5 L 0 9"
+        fill="none"
+        stroke="#334155"
+        stroke-width="1.5"
+      />
+    </marker>
+  </defs>
+  <rect width="480" height="977" fill="white" />
+  <text
+    x="24"
+    y="44"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="24"
+    font-weight="600"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">02 三阶段调度与写锁</tspan>
+  </text>
+  <rect
+    x="16"
+    y="64"
+    width="448"
+    height="157"
+    rx="5"
+    fill="#f6f7f9"
+    stroke="#a3adba"
+    stroke-width="1.5"
+  />
+  <text
+    x="30"
+    y="94"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="30" dy="0">① 持有 FSNamesystem 写锁</tspan>
+  </text>
+  <rect
+    x="40"
+    y="110"
+    width="400"
+    height="92"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="149.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">scheduleReconstruction()</tspan>
+    <tspan x="240.0" dy="28">统计副本、选择 sources、构造 work</tspan>
+  </text>
+  <path
+    d="M 240 221 L 240 278"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="255.5"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">释放锁</tspan>
+  </text>
+  <rect
+    x="16"
+    y="278"
+    width="448"
+    height="232"
+    rx="5"
+    fill="#f6f7f9"
+    stroke="#a3adba"
+    stroke-width="1.5"
+  />
+  <text
+    x="30"
+    y="308"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="30" dy="0">② 不持有全局写锁</tspan>
+  </text>
+  <rect
+    x="40"
+    y="325"
+    width="400"
+    height="82"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="359.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">chooseTargets()</tspan>
+    <tspan x="240.0" dy="28">按 placement policy 选择 storages</tspan>
+  </text>
+  <text
+    x="40"
+    y="449"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="40" dy="0">并发事件示例：收到新的 IBR</tspan>
+    <tspan x="40" dy="28">副本可能已补齐，原需求随之消失</tspan>
+  </text>
+  <path
+    d="M 240 510 L 240 568"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="545.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">重新加锁</tspan>
+  </text>
+  <rect
+    x="16"
+    y="568"
+    width="448"
+    height="280"
+    rx="5"
+    fill="#f6f7f9"
+    stroke="#a3adba"
+    stroke-width="1.5"
+  />
+  <text
+    x="30"
+    y="598"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="30" dy="0">③ 持有 FSNamesystem 写锁</tspan>
+  </text>
+  <rect
+    x="40"
+    y="615"
+    width="400"
+    height="82"
+    rx="5"
+    fill="#f2eefa"
+    stroke="#7960a0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="649.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">validateReconstructionWork()</tspan>
+    <tspan x="240.0" dy="28">复查 block、live + pending、placement</tspan>
+  </text>
+  <path
+    d="M 240 697 L 240 741"
+    fill="none"
+    stroke="#334155"
+    stroke-width="1.8"
+    marker-end="url(#head)"
+  />
+  <text
+    x="254"
+    y="725.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="254" dy="0">通过</tspan>
+  </text>
+  <rect
+    x="40"
+    y="741"
+    width="400"
+    height="86"
+    rx="5"
+    fill="#edf3ff"
+    stroke="#4168b0"
+    stroke-width="1.5"
+  />
+  <text
+    x="240.0"
+    y="777.0"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="middle"
+  >
+    <tspan x="240.0" dy="0">任务入队 → 登记 pending</tspan>
+    <tspan x="240.0" dy="28">数量满足时移出 needed</tspan>
+  </text>
+  <text
+    x="24"
+    y="890"
+    fill="#17243a"
+    font-family="system-ui,-apple-system,PingFang SC,Microsoft YaHei,sans-serif"
+    font-size="20"
+    font-weight="400"
+    text-anchor="start"
+  >
+    <tspan x="24" dy="0">无 target：跳过本轮 work</tspan>
+    <tspan x="24" dy="28">需求已消失：移出 needed</tspan>
+    <tspan x="24" dy="28">placement 未改善：保留需求，跳过</tspan>
+  </text>
+</svg>
