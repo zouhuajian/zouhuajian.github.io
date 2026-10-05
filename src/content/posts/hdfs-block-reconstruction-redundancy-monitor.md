@@ -17,7 +17,9 @@ description: "从冗余状态判定、优先级调度到 DataNode 副本复制�
 
 DataNode 故障、存储损坏、节点退出服务或副本数调整，都可能使 block 的现有冗余不再满足要求。NameNode 负责统计副本、选择重构任务和安排执行节点；DataNode 负责复制数据或恢复 EC internal blocks，并通过 block report 汇报结果。
 
-![重构流程：NameNode 发现需求并登记任务，DataNode 通过 heartbeat 领取命令，执行后报告副本](../../assets/images/hdfs-block-reconstruction/reconstruction-architecture-spaced.svg)
+![总流程：RedundancyMonitor 选择候选并验证，任务入队与 pending 登记分开；独立线程扫描超时，IBR/FBR 反馈到对应记录，postponed 重扫重新分类](../../assets/images/hdfs-block-reconstruction/reconstruction-overview.svg)
+
+图中灰框表示归属和线程边界，蓝框表示内存容器，紫框表示处理步骤，可点击放大。验证通过后，任务进入 DataNode 描述对象的队列，同时登记 pending；超时记录经独立线程移交给 `RedundancyMonitor` 重新判断。IBR 确认 pending target，IBR/FBR 更新副本事实；postponed 重扫重新分类，不直接等同于重构重试。
 
 `BlocksMap` 保存 NameNode 已知的 block 元数据及其 storage 关联。普通 block 由 `BlockInfoContiguous` 表示，多份 replica 对应同一个逻辑 block；EC block group 由 `BlockInfoStriped` 表示，副本还要按 internal block index 区分。`NumberReplicas` 则是根据这些关联和节点状态计算出的分类统计。
 
@@ -34,6 +36,8 @@ DataNode 故障、存储损坏、节点退出服务或副本数调整，都可�
 </div>
 
 容器和 `DatanodeDescriptor` 中的任务队列都位于 NameNode 内存。`BlockReconstructionWork` 是一次调度中的临时对象，验证通过后才会把任务放入相应 DataNode 描述对象的队列；远端 DataNode 在后续 heartbeat 响应中领取命令。
+
+![重构流程：NameNode 发现需求并登记任务，DataNode 通过 heartbeat 领取命令，执行后报告副本](../../assets/images/hdfs-block-reconstruction/reconstruction-architecture-spaced.svg)
 
 源码：[BlockManager.java:363](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockManager.java#L363-L391)、[DatanodeDescriptor.java:196](https://github.com/apache/hadoop/blob/rel/release-3.4.1/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/DatanodeDescriptor.java#L196-L205)。
 

@@ -1,0 +1,1580 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  direction="ltr"
+  width="2504"
+  height="2038"
+  viewBox="-102 -32 2504 2038"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  data-color-mode="light"
+  class="tl-container tl-theme__force-sRGB tl-theme__light"
+  style="background-color: rgb(249, 250, 251)"
+  role="img"
+  aria-labelledby="overview-title overview-desc"
+>
+  <title id="overview-title">HDFS Block Reconstruction：调度、执行与反馈</title>
+  <desc id="overview-desc">
+    tldraw 绘制。区分线程、内存容器、任务下发、超时消费、报告确认与 postponed
+    重扫。
+  </desc>
+  <rect x="-102" y="-32" width="2504" height="2038" fill="#ffffff" />
+  <g transform="matrix(1, 0, 0, 1, 0, 280)" opacity="1">
+    <rect width="2300" height="1080" fill="#eceef0" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 2300 0 L 2300 1080 L 0 1080 Z"
+      fill="none"
+      stroke="#9fa8b2"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 620, 340)" opacity="1">
+    <rect width="950" height="860" fill="#eceef0" />
+    <g stroke-width="2" fill="none" stroke="#9fa8b2">
+      <path
+        d="M 0 0 L 950 0"
+        stroke-dasharray="4.008403361344538 4.0423728813559325"
+        stroke-dashoffset="2"
+      />
+      <path
+        d="M 950 0 L 950 860"
+        stroke-dasharray="4 4.037383177570093"
+        stroke-dashoffset="2"
+      />
+      <path
+        d="M 950 860 L 0 860"
+        stroke-dasharray="4.008403361344538 4.0423728813559325"
+        stroke-dashoffset="2"
+      />
+      <path
+        d="M 0 860 L 0 0"
+        stroke-dasharray="4 4.037383177570093"
+        stroke-dashoffset="2"
+      />
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1670, 900)" opacity="1">
+    <rect width="520" height="170" fill="#eceef0" />
+    <g stroke-width="2" fill="none" stroke="#9fa8b2">
+      <path
+        d="M 0 0 L 520 0"
+        stroke-dasharray="4.030769230769231 4.09375"
+        stroke-dashoffset="2"
+      />
+      <path
+        d="M 520 0 L 520 170"
+        stroke-dasharray="4.142857142857143 4.35"
+        stroke-dashoffset="2"
+      />
+      <path
+        d="M 520 170 L 0 170"
+        stroke-dasharray="4.030769230769231 4.09375"
+        stroke-dashoffset="2"
+      />
+      <path
+        d="M 0 170 L 0 0"
+        stroke-dasharray="4.142857142857143 4.35"
+        stroke-dashoffset="2"
+      />
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 620, 1430)" opacity="1">
+    <rect width="1570" height="230" fill="#eceef0" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 1570 0 L 1570 230 L 0 230 Z"
+      fill="none"
+      stroke="#9fa8b2"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 40, 130)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 470 0 L 470 90 L 0 90 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 470 0 L 470 90 L 0 90 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 590, 130)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 470 0 L 470 90 L 0 90 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 470 0 L 470 90 L 0 90 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1140, 130)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 470 0 L 470 90 L 0 90 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 470 0 L 470 90 L 0 90 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1690, 130)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 470 0 L 470 90 L 0 90 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 470 0 L 470 90 L 0 90 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 80, 390)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 440 0 L 440 130 L 0 130 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 440 0 L 440 130 L 0 130 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 80, 650)" opacity="1">
+    <path fill="#dce1f8" d="M 0 0 L 440 0 L 440 150 L 0 150 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 440 0 L 440 150 L 0 150 Z"
+      fill="none"
+      stroke="#4465e9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 80, 1030)" opacity="1">
+    <path fill="#dce1f8" d="M 0 0 L 440 0 L 440 120 L 0 120 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 440 0 L 440 120 L 0 120 Z"
+      fill="none"
+      stroke="#4465e9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 660, 410)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 870 0 L 870 270 L 0 270 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 870 0 L 870 270 L 0 270 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1690, 420)" opacity="1">
+    <path fill="#dce1f8" d="M 0 0 L 480 0 L 480 140 L 0 140 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 480 0 L 480 140 L 0 140 Z"
+      fill="none"
+      stroke="#4465e9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1690, 680)" opacity="1">
+    <path fill="#dce1f8" d="M 0 0 L 480 0 L 480 130 L 0 130 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 480 0 L 480 130 L 0 130 Z"
+      fill="none"
+      stroke="#4465e9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1690, 963)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 480 0 L 480 80 L 0 80 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 480 0 L 480 80 L 0 80 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1210, 810)" opacity="1">
+    <path fill="#dce1f8" d="M 0 0 L 320 0 L 320 100 L 0 100 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 320 0 L 320 100 L 0 100 Z"
+      fill="none"
+      stroke="#4465e9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 660, 810)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 440 0 L 440 110 L 0 110 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 440 0 L 440 110 L 0 110 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1090, 1030)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 440 0 L 440 120 L 0 120 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 440 0 L 440 120 L 0 120 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 660, 1510)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 640 0 L 640 110 L 0 110 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 640 0 L 640 110 L 0 110 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1430, 1510)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 720 0 L 720 110 L 0 110 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 720 0 L 720 110 L 0 110 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 800, 1740)" opacity="1">
+    <path fill="#ecdcf2" d="M 0 0 L 860 0 L 860 104 L 0 104 Z" />
+    <path
+      stroke-width="2"
+      d="M 0 0 L 860 0 L 860 104 L 0 104 Z"
+      fill="none"
+      stroke="#ae3ec9"
+    />
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 275, 220)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 40" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 275, 260)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 1650 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 825, 220)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 40" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1375, 220)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 40" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1925, 220)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 40" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 300, 260)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 130" />
+        </g>
+        <path
+          d="M 2.9999999999999996 124.80384757729337 L -2.9999999999999996 124.80384757729337 L 0 130 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 300, 520)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 130" />
+        </g>
+        <path
+          d="M 2.9999999999999996 124.80384757729337 L -2.9999999999999996 124.80384757729337 L 0 130 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 520, 725)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 60 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 580, 725)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 -180" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 580, 545)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 80 0" />
+        </g>
+        <path
+          d="M 74.80384757729337 -2.9999999999999996 L 74.80384757729337 2.9999999999999996 L 80 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1530, 490)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 160 0" />
+        </g>
+        <path
+          d="M 154.80384757729337 -2.9999999999999996 L 154.80384757729337 2.9999999999999996 L 160 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1530, 625)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 95 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1625, 625)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 120" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1625, 745)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 65 0" />
+        </g>
+        <path
+          d="M 59.80384757729337 -2.9999999999999996 L 59.80384757729337 2.9999999999999996 L 65 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 2170, 475)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 60 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 2230, 475)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 525" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 2230, 1000)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -60 0" />
+        </g>
+        <path
+          d="M -54.80384757729337 2.9999999999999996 L -54.80384757729337 -2.9999999999999996 L -60 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1690, 1000)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -75 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1615, 1000)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 -140" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1615, 860)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -85 0" />
+        </g>
+        <path
+          d="M -79.80384757729337 2.9999999999999996 L -79.80384757729337 -2.9999999999999996 L -85 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1210, 860)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -110 0" />
+        </g>
+        <path
+          d="M -104.80384757729337 2.9999999999999996 L -104.80384757729337 -2.9999999999999996 L -110 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 660, 865)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -360 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 300, 865)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 -65" />
+        </g>
+        <path
+          d="M -2.9999999999999996 -59.80384757729337 L 2.9999999999999996 -59.80384757729337 L 0 -65 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 520, 455)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 30 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 550, 455)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 525" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 550, 980)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -250 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 300, 980)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 50" />
+        </g>
+        <path
+          d="M 2.9999999999999996 44.80384757729337 L -2.9999999999999996 44.80384757729337 L 0 50 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 520, 1090)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 570 0" />
+        </g>
+        <path
+          d="M 564.8038475772934 -2.9999999999999996 L 564.8038475772934 2.9999999999999996 L 570 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1310, 1150)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 65" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1310, 1215)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -1280 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 30, 1215)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 -760" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 30, 455)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 50 0" />
+        </g>
+        <path
+          d="M 44.80384757729337 -2.9999999999999996 L 44.80384757729337 2.9999999999999996 L 50 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 2170, 745)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 110 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 2280, 745)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 640" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 2280, 1385)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -1300 0" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 980, 1385)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 125" />
+        </g>
+        <path
+          d="M 2.9999999999999996 119.80384757729337 L -2.9999999999999996 119.80384757729337 L 0 125 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1790, 1385)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 125" />
+        </g>
+        <path
+          d="M 2.9999999999999996 119.80384757729337 L -2.9999999999999996 119.80384757729337 L 0 125 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 980, 1620)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 120" stroke-dasharray="9 7" />
+        </g>
+        <path
+          d="M 2.9999999999999996 114.80384757729337 L -2.9999999999999996 114.80384757729337 L 0 120 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1790, 1620)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 170" stroke-dasharray="9 7" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1790, 1790)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -130 0" stroke-dasharray="9 7" />
+        </g>
+        <path
+          d="M -124.80384757729337 2.9999999999999996 L -124.80384757729337 -2.9999999999999996 L -130 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 800, 1790)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -870 0" stroke-dasharray="9 7" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, -70, 1790)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 -1335" stroke-dasharray="9 7" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, -70, 455)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 150 0" stroke-dasharray="9 7" />
+        </g>
+        <path
+          d="M 144.80384757729337 -2.9999999999999996 L 144.80384757729337 2.9999999999999996 L 150 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 1660, 1810)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 700 0" stroke-dasharray="9 7" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 2360, 1810)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L 0 -1270" stroke-dasharray="9 7" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 2360, 540)" opacity="1">
+    <g transform="scale(1)">
+      <g
+        fill="none"
+        stroke="#1d1d1d"
+        stroke-width="2"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        pointer-events="none"
+      >
+        <g>
+          <path stroke-width="2" d="M 0 0 L -190 0" stroke-dasharray="9 7" />
+        </g>
+        <path
+          d="M -184.80384757729337 2.9999999999999996 L -184.80384757729337 -2.9999999999999996 L -190 0 Z"
+        />
+      </g>
+    </g>
+  </g>
+  <text
+    x="880.0"
+    y="846.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="880.0" dy="0">processPendingReconstructions()</tspan>
+    <tspan x="880.0" dy="26.0">取得当前 BlockInfo</tspan>
+    <tspan x="880.0" dy="26.0">重新统计副本、判断重构需求</tspan>
+  </text>
+  <text
+    x="330"
+    y="360"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="330" dy="0">重新判断</tspan>
+  </text>
+  <text
+    x="660"
+    y="404"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#667085"
+    font-weight="400"
+  >
+    <tspan x="660" dy="0">
+      每轮依次调度、消费超时记录、重扫 postponed；其余维护略
+    </tspan>
+  </text>
+  <text
+    x="690"
+    y="1070"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="690" dy="0">限量重扫</tspan>
+  </text>
+  <text
+    x="1930.0"
+    y="997.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1930.0" dy="0">扫描 pending：超时则移除条目</tspan>
+    <tspan x="1930.0" dy="26.0">并加入 timedOutItems</tspan>
+  </text>
+  <text
+    x="40"
+    y="326"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="26"
+    fill="#1d1d1d"
+    font-weight="600"
+  >
+    <tspan x="40" dy="0">NameNode · BlockManager</tspan>
+  </text>
+  <text
+    x="60"
+    y="1926"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="26"
+    fill="#667085"
+    font-weight="400"
+  >
+    <tspan x="60" dy="0">
+      灰框：归属 / 线程边界 蓝框：内存容器 紫框：处理步骤 虚线：报告反馈
+    </tspan>
+  </text>
+  <text
+    x="1230.0"
+    y="1773.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1230.0" dy="0">targets 完成后报告</tspan>
+    <tspan x="1230.0" dy="26.0">IBR：确认 pending target，并更新副本事实</tspan>
+    <tspan x="1230.0" dy="26.0">
+      FBR：更新副本事实，不直接 decrement pending
+    </tspan>
+  </text>
+  <text
+    x="1310.0"
+    y="1071.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1310.0" dy="0">rescanPostponedMisreplicatedBlocks()</tspan>
+    <tspan x="1310.0" dy="26.0">先移出条目，再执行</tspan>
+    <tspan x="1310.0" dy="26.0">processMisReplicatedBlock()</tspan>
+  </text>
+  <text
+    x="70"
+    y="975"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="70" dy="0">信息不足，暂缓删除</tspan>
+  </text>
+  <text
+    x="320"
+    y="586"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="320" dy="0">需要重构：加入 / 更新</tspan>
+  </text>
+  <text
+    x="660"
+    y="378"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="26"
+    fill="#1d1d1d"
+    font-weight="600"
+  >
+    <tspan x="660" dy="0">RedundancyMonitor 线程</tspan>
+  </text>
+  <text
+    x="810"
+    y="1700"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="810" dy="0">副本报告</tspan>
+  </text>
+  <text
+    x="670"
+    y="718"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="670" dy="0">
+      验证通过后：任务入队 + 登记 pending；数量满足时移出 needed
+    </tspan>
+  </text>
+  <text
+    x="300.0"
+    y="706.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="300.0" dy="0">neededReconstruction</tspan>
+    <tspan x="300.0" dy="26.0">LowRedundancyBlocks</tspan>
+    <tspan x="300.0" dy="26.0">按风险优先级保存需求</tspan>
+  </text>
+  <text
+    x="300.0"
+    y="436.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="300.0" dy="0">当前 block 的副本事实与分类</tspan>
+    <tspan x="300.0" dy="26.0">BlocksMap → countNodes()</tspan>
+    <tspan x="300.0" dy="26.0">数量 / placement / 删除安全性</tspan>
+  </text>
+  <text
+    x="50"
+    y="1765"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="50" dy="0">IBR / FBR：更新副本事实</tspan>
+  </text>
+  <text
+    x="650"
+    y="1476"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="26"
+    fill="#1d1d1d"
+    font-weight="600"
+  >
+    <tspan x="650" dy="0">DataNode · 数据传输与执行</tspan>
+  </text>
+  <text
+    x="1370.0"
+    y="854.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1370.0" dy="0">timedOutItems</tspan>
+    <tspan x="1370.0" dy="26.0">等待 monitor 消费</tspan>
+  </text>
+  <text
+    x="676"
+    y="487.0"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="676" dy="0">computeDatanodeWork() · 重构调度</tspan>
+    <tspan x="676" dy="26.0">① 写锁内：按优先级选择候选</tspan>
+    <tspan x="676" dy="26.0">② 写锁内：选择 source，构造临时 work</tspan>
+    <tspan x="676" dy="26.0">③ 锁外：选择 targets</tspan>
+    <tspan x="676" dy="26.0">④ 重新加锁：复查状态与 placement</tspan>
+    <tspan x="676" dy="26.0">
+      BlockReconstructionWork：ReplicationWork / ErasureCodingWork
+    </tspan>
+  </text>
+  <text
+    x="1820"
+    y="1700"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1820" dy="0">副本报告</tspan>
+  </text>
+  <text
+    x="80"
+    y="835"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="80" dy="0">选中候选 ≠ 立即移出 needed</tspan>
+  </text>
+  <text
+    x="40"
+    y="91"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="26"
+    fill="#667085"
+    font-weight="400"
+  >
+    <tspan x="40" dy="0">
+      Apache Hadoop 3.4.1 / 箭头标注操作；容器并非互斥状态
+    </tspan>
+  </text>
+  <text
+    x="275.0"
+    y="169.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="275.0" dy="0">节点状态变化</tspan>
+    <tspan x="275.0" dy="26.0">failure / decommission / maintenance</tspan>
+  </text>
+  <text
+    x="825.0"
+    y="169.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="825.0" dy="0">副本与拓扑变化</tspan>
+    <tspan x="825.0" dy="26.0">block report / corrupt / placement</tspan>
+  </text>
+  <text
+    x="1690"
+    y="937"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1690" dy="0">PendingReconstructionMonitor 线程</tspan>
+  </text>
+  <text
+    x="1570"
+    y="670"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1570" dy="0">入队</tspan>
+  </text>
+  <text
+    x="1375.0"
+    y="169.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1375.0" dy="0">副本数调整</tspan>
+    <tspan x="1375.0" dy="26.0">setReplication()</tspan>
+  </text>
+  <text
+    x="1925.0"
+    y="169.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1925.0" dy="0">NameNode 启动 / 切换 Active</tspan>
+    <tspan x="1925.0" dy="26.0">队列初始化与报告更新</tspan>
+  </text>
+  <text
+    x="300.0"
+    y="1084.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="300.0" dy="0">postponedMisreplicatedBlocks</tspan>
+    <tspan x="300.0" dy="26.0">暂缓安全删除判断</tspan>
+  </text>
+  <text
+    x="730"
+    y="1270"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="730" dy="0">
+      重扫结果：需要重构 → needed；可安全处理 → 删除或结束；仍为 POSTPONE → 加回
+      postponed
+    </tspan>
+  </text>
+  <text
+    x="525"
+    y="605"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="525" dy="0">选择候选</tspan>
+  </text>
+  <text
+    x="1790.0"
+    y="1546.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1790.0" dy="0">EC 解码重构</tspan>
+    <tspan x="1790.0" dy="26.0">
+      首个 target 领取重构命令，作为 coordinator
+    </tspan>
+    <tspan x="1790.0" dy="26.0">sources → read / decode → targets</tspan>
+  </text>
+  <text
+    x="1930.0"
+    y="726.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1930.0" dy="0">DatanodeDescriptor 任务队列</tspan>
+    <tspan x="1930.0" dy="26.0">replicateBlocks / ecBlocksToBeReplicated</tspan>
+    <tspan x="1930.0" dy="26.0">ecBlocksToBeErasureCoded</tspan>
+  </text>
+  <text
+    x="60"
+    y="1970"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#667085"
+    font-weight="400"
+  >
+    <tspan x="60" dy="0">
+      pending 超时不会取消 DataNode 原任务；迟到报告按当前副本事实处理。总图省略
+      invalidation 下发等分支。
+    </tspan>
+  </text>
+  <text
+    x="1500"
+    y="1408"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1500" dy="0">heartbeat 响应：从节点队列领取命令</tspan>
+  </text>
+  <text
+    x="1570"
+    y="475"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1570" dy="0">登记</tspan>
+  </text>
+  <text
+    x="2200"
+    y="868"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="2200" dy="0">超时检查</tspan>
+  </text>
+  <text
+    x="340"
+    y="905"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="340" dy="0">仍需重构：重新加入</tspan>
+  </text>
+  <text
+    x="980.0"
+    y="1546.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="980.0" dy="0">普通复制 / EC internal block 直接复制</tspan>
+    <tspan x="980.0" dy="26.0">source 领取 DNA_TRANSFER</tspan>
+    <tspan x="980.0" dy="26.0">source → targets：传输已有 block</tspan>
+  </text>
+  <text
+    x="70"
+    y="1270"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="70" dy="0">按当前事实重新分类</tspan>
+  </text>
+  <text
+    x="1760"
+    y="1870"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1760" dy="0">
+      IBR：移除匹配 target；全部确认后删除 pending 条目
+    </tspan>
+  </text>
+  <text
+    x="1930.0"
+    y="471.0"
+    text-anchor="middle"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1930.0" dy="0">pendingReconstruction</tspan>
+    <tspan x="1930.0" dy="26.0">BlockInfo → targets + timestamp</tspan>
+    <tspan x="1930.0" dy="26.0">等待报告确认，尚不代表副本已存在</tspan>
+  </text>
+  <text
+    x="1120"
+    y="843"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="20"
+    fill="#1d1d1d"
+    font-weight="400"
+  >
+    <tspan x="1120" dy="0">消费</tspan>
+  </text>
+  <text
+    x="40"
+    y="44"
+    text-anchor="start"
+    font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif"
+    font-size="44"
+    fill="#1d1d1d"
+    font-weight="600"
+  >
+    <tspan x="40" dy="0">HDFS Block Reconstruction · 调度、执行与反馈</tspan>
+  </text>
+</svg>
